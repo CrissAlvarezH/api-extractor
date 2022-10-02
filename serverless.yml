@@ -6,6 +6,9 @@ provider:
   region: us-east-2
   runtime: python3.8
 
+custom:
+  api-keys-secret: '${ssm:/aws/reference/secretsmanager/api-extractor-config/apikeys}'
+
 functions:
   ConfigApi:
     role: ApiConfigRol
@@ -61,6 +64,16 @@ resources:
           - AttributeName: updated_at
             KeyType: RANGE
 
+    ApiConfigKeysSecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Description: "Api Keys for Api Extractor Config api"
+        Name: api-extractor-config/apikeys
+        GenerateSecretString: 
+          SecretStringTemplate: "{}"
+          GenerateStringKey: "rootkey"
+          PasswordLength: 50
+       
     ApiConfigRol:
       Type: AWS::IAM::Role
       Properties:
@@ -98,6 +111,15 @@ resources:
                   Resource:
                     - 'Fn::GetAtt': ['ApiExtractorConfigTable', 'Arn']
                     - 'Fn::GetAtt': ['ApiExtractorConfigHistoryTable', 'Arn']
+                - Effect: Allow
+                  Action:
+                    - secretsmanager:*
+                  Resource:
+                    - Ref: 'ApiConfigKeysSecret'
+
+  Outputs:
+    RootApiKey:
+      Value: '${self:custom.api-keys-secret.rootkey}'
 
 plugins:
   - serverless-python-requirements
