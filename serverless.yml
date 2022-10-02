@@ -1,0 +1,103 @@
+service: api-extractor
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  region: us-east-2
+  runtime: python3.8
+
+functions:
+  ConfigApi:
+    role: ApiConfigRol
+    handler: src.api.main.handler
+    events:
+      - httpApi:
+          path: /config
+          method: get
+      - httpApi:
+          path: /config/{id}
+          method: get
+      - httpApi:
+          path: /config
+          method: post
+      - httpApi:
+          path: /config/{id}
+          method: put
+      - httpApi:
+          path: /config/{id}
+          method: delete
+      - httpApi:
+          path: /config/{id}/history
+          method: get
+
+resources:
+  Resources:
+
+    ApiExtractorConfigTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ApiExtractorConfig
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    ApiExtractorConfigHistoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ApiExtractorConfigHistory
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: updated_at
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: updated_at
+            KeyType: RANGE
+
+    ApiConfigRol:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /api-consumer/
+        RoleName: ApiConfig
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ApiConfigPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - dynamodb:*
+                  Resource:
+                    - 'Fn::GetAtt': ['ApiExtractorConfigTable', 'Arn']
+                    - 'Fn::GetAtt': ['ApiExtractorConfigHistoryTable', 'Arn']
+
+plugins:
+  - serverless-python-requirements
