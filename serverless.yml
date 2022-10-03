@@ -12,6 +12,8 @@ functions:
   ConfigApi:
     role: ApiConfigRol
     handler: src.api.main.handler
+    environment:
+      STAGE: ${opt:stage, 'dev'}
     events:
       - httpApi:
           path: /config
@@ -32,6 +34,9 @@ functions:
           path: /config/{id}/history
           method: get
       - httpApi:
+          path: /config/{id}/execute
+          method: post
+      - httpApi:
           path: /api-keys
           method: post
       - httpApi:
@@ -40,6 +45,9 @@ functions:
       - httpApi:
           path: /api-keys/{name}
           method: delete
+  
+  ApiExtractor:
+    handler: src.extractor.main.handler
 
 resources:
   Resources:
@@ -47,7 +55,7 @@ resources:
     ApiExtractorConfigTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ApiExtractorConfig
+        TableName: ApiExtractorConfig-${opt:stage, 'dev'}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
@@ -59,7 +67,7 @@ resources:
     ApiExtractorConfigHistoryTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ApiExtractorConfigHistory
+        TableName: ApiExtractorConfigHistory-${opt:stage, 'dev'}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
@@ -76,14 +84,14 @@ resources:
       Type: AWS::SecretsManager::Secret
       Properties:
         Description: "Api Keys for Api Extractor Config api"
-        Name: api-extractor-config/apikeys
+        Name: api-extractor-config/${opt:stage, 'dev'}/apikeys
         SecretString: '{"rootkey": "${self:custom.root_api_key}"}'
        
     ApiConfigRol:
       Type: AWS::IAM::Role
       Properties:
         Path: /api-consumer/
-        RoleName: ApiConfig
+        RoleName: ApiExtractorConfig-${opt:stage, 'dev'}
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -93,7 +101,7 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: ApiConfigPolicy
+          - PolicyName: ApiConfigPolicy-${opt:stage, 'dev'}
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
@@ -121,6 +129,13 @@ resources:
                     - secretsmanager:*
                   Resource:
                     - Ref: 'ApiConfigKeysSecret'
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeAsync
+                    - lambda:InvokeFunction
+                    - lambda:InvokeFunctionUrl
+                  Resource:
+                    - 'Fn::GetAtt': ['ApiExtractorLambdaFunction', 'Arn']
 
   Outputs:
     RootApiKey:

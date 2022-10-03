@@ -1,7 +1,11 @@
+import json
 import secrets
 from typing import Optional
 
+import boto3
 from pydantic import ValidationError
+
+from src.api.constants import API_EXTRACTOR_FUNCTION_NAME
 
 from .utils import Response
 from .repository import add_or_update_api_key, get_api_config, list_api_config_history, list_api_configs, insert_config, remove_api_key, remove_config
@@ -54,6 +58,18 @@ def delete_config(id: str, api_key: str):
 
     remove_config(id, api_key)
     return Response()
+
+
+def invoke_api_extractor(id: str):
+    if "Item" not in get_api_config(id):
+        return Response({"error": "Not found"}, 404)
+
+    client = boto3.client("lambda")
+    resp = client.invoke_async(
+        FunctionName=API_EXTRACTOR_FUNCTION_NAME,
+        InvokeArgs=bytes(json.dumps({"id": id}), encoding="utf8")
+    )
+    return Response(resp)
 
 
 # API KEYS

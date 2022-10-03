@@ -3,23 +3,23 @@ from typing import Optional, Union
 from datetime import datetime
 from uuid import uuid4
 
-import boto3
 from boto3.dynamodb.conditions import Key
 
-from src.api.schemas import ApiConfig
+from src.api.constants import API_KEYS_SECRET_NAME
+
+from .schemas import ApiConfig
+from .utils import api_keys_secrets, config_db_table
 
 # API CONFIG 
 
 def list_api_configs() -> dict:
-    db = boto3.resource("dynamodb")
-    table = db.Table("ApiExtractorConfig")
+    table, _ = config_db_table()
     resp = table.scan()
     return resp
 
 
 def list_api_config_history(id: str, updated_after_that: str) -> dict:
-    db = boto3.resource("dynamodb")
-    table = db.Table("ApiExtractorConfigHistory")
+    _, history_table = config_db_table()
 
     params = {
         "KeyConditionExpression": Key("id").eq(id),
@@ -29,20 +29,17 @@ def list_api_config_history(id: str, updated_after_that: str) -> dict:
     if updated_after_that:
         params["ExclusiveStartKey"] = {"id": id, "updated_at": updated_after_that}
 
-    return table.query(**params)
+    return history_table.query(**params)
 
 
 def get_api_config(id: str) -> dict:
-    db = boto3.resource("dynamodb")
-    table = db.Table("ApiExtractorConfig")
+    table, _ = config_db_table()
     return table.get_item(Key={"id": id})
 
 
 def insert_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
     """ Insert or update config, and insert on history table each new update"""
-    db = boto3.resource("dynamodb")
-    table = db.Table("ApiExtractorConfig")
-    history_table = db.Table("ApiExtractorConfigHistory")
+    table, history_table = config_db_table()
     
     data = {
         **body,
@@ -63,9 +60,7 @@ def insert_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
 
 
 def remove_config(id: str, api_key: str):
-    db = boto3.resource("dynamodb")
-    table = db.Table("ApiExtractorConfig")
-    history_table = db.Table("ApiExtractorConfigHistory")
+    table, history_table = config_db_table()
 
     config = get_api_config(id)["Item"]
     table.delete_item(Key={"id": id})
@@ -80,22 +75,17 @@ def remove_config(id: str, api_key: str):
 # API KEYS SECRET
 
 def get_api_key_name(key_value: str) -> Union[str, None]:
-    client = boto3.client("secretsmanager")
-    secret = client.get_secret_value(SecretId="api-extractor-config/apikeys")
-    api_keys = json.loads(secret.get("SecretString"))
+    _, api_keys = api_keys_secrets()
 
     found = [k[0] for k in api_keys.items() if k[1] == key_value]
     return found[0] if len(found) > 0 else None
 
 
 def add_or_update_api_key(name: str, value: str):
-    client = boto3.client("secretsmanager")
-    secret = client.get_secret_value(SecretId="api-extractor-config/apikeys")
-    api_keys = json.loads(secret.get("SecretString"))
-
+    client, api_keys = api_keys_secrets()
     api_keys.update({name: value})
     client.update_secret(
-        SecretId="api-extractor-config/apikeys",
+        SecretId=API_KEYS_SECRET_NAME,
         SecretString=json.dumps(api_keys)
     )
 
@@ -103,13 +93,11 @@ def add_or_update_api_key(name: str, value: str):
 
 
 def remove_api_key(name: str):
-    client = boto3.client("secretsmanager")
-    secret = client.get_secret_value(SecretId="api-extractor-config/apikeys")
-    api_keys = json.loads(secret.get("SecretString"))
+    client, api_keys = api_keys_secrets()
 
     del api_keys[name]
 
     client.update_secret(
-        SecretId="api-extractor-config/apikeys",
+        SecretId=API_KEYS_SECRET_NAME,
         SecretString=json.dumps(api_keys)
     )

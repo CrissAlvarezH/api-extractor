@@ -1,7 +1,7 @@
 import json
 
 from .repository import get_api_key_name
-from .routes import delete_api_key, delete_config, generate_api_key, get_config_history, get_configs, create_config, update_config
+from .routes import delete_api_key, delete_config, generate_api_key, get_config_history, get_configs, create_config, invoke_api_extractor, update_config
 from .utils import Response
 
 
@@ -32,6 +32,9 @@ def handler(event, context):
     elif path == "/config/{id}/history":
         response = get_config_history(
             path_params.get("id"), query_params.get("last_updated_at"))
+
+    elif path == "/config/{id}/execute":
+        response = invoke_api_extractor(path_params.get("id"))
 
     elif path in ("/api-keys", "/api-keys/{name}"):
         if method == "POST":
