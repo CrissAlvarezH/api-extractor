@@ -37,7 +37,7 @@ def get_api_config(id: str) -> dict:
     return table.get_item(Key={"id": id})
 
 
-def insert_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
+def put_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
     """ Insert or update config, and insert on history table each new update"""
     table, history_table = config_db_table()
     
@@ -47,6 +47,25 @@ def insert_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
     }
 
     api_config = ApiConfig(**data).dict()
+
+    extractions_in = api_config.get("extractions", [])
+
+    if id:
+        # validate extractions exists in db
+        api_config_in_db = get_api_config(id)["Item"]
+        def extraction_exists(extraction_id: str) -> bool:
+            found = [e for e in api_config_in_db.get("extractions") 
+                     if e.get("id") == extraction_id]
+            return len(found) > 0
+
+        for extraction in extractions_in:
+            if extraction.get("id") and not extraction_exists(extraction.get("id")):
+                raise ValueError(f"Extraction {extraction.get('id')} does't exists")
+
+    # add id for new extractions
+    for extraction in extractions_in:
+        if not extraction.get("id"):
+            extraction["id"] = uuid4().hex
 
     table.put_item(Item=api_config)
 
