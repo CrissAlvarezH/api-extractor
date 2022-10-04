@@ -17,6 +17,7 @@ var/
 .installed.cfg
 *.egg
 node_modules
+.env
 
 # Serverless directories
 .serverless

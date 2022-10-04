@@ -1,5 +1,6 @@
 service: api-extractor
 frameworkVersion: '3'
+useDotenv: true
 
 provider:
   name: aws
@@ -48,6 +49,10 @@ functions:
   
   ApiExtractor:
     handler: src.extractor.main.handler
+    events:
+      - eventBridge:
+          enabled: true
+          schedule: cron(${env:EVENT_BRIDGE_SCHEDULE, '0 1 * * ? *'})
 
 resources:
   Resources:
