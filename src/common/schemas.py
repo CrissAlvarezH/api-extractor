@@ -40,6 +40,7 @@ class Extraction(BaseModel):
     id: Optional[str]
     name: str
     endpoint: Endpoint
+    data_key: Optional[str]
     pagination: Pagination
     s3_destiny: str
     data_schema: Optional[dict]

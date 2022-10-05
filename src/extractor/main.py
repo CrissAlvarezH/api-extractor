@@ -2,7 +2,9 @@ import logging
 import re
 from typing import List, Union, Optional
 
+import requests
 from requests import request
+from src.common.aws import extractor_secrets
 
 from src.common.repository import get_api_config, list_api_configs
 from src.common.schemas import ApiAuth, ApiConfig, Extraction
@@ -30,7 +32,8 @@ def get_configs(event) -> List[ApiConfig]:
         # return all configs
         configs = list_api_configs()["Items"]
 
-    return [ApiConfig(c) for c in configs]
+    LOG.info(f"Configs to execute {configs}")
+    return [ApiConfig(**c) for c in configs]
 
 
 def extract_from_json(data: dict, dot_syntax: str) -> str:
@@ -68,8 +71,32 @@ def evaluate_expression(data: dict, expression: str) -> bool:
         info.total_pages > info.current_page
         info.more_records
     """
-    # TODO
-    pass
+    expression = expression.strip()
+
+    if " " in expression:
+        # then is <json_dot_syntax> <operator> <json_dot_syntax>
+        dot_syntax_left, operator, dot_syntax_right = expression.split(" ")
+
+        value_left = extract_from_json(data, dot_syntax_left)
+        value_right = extract_from_json(data, dot_syntax_right)
+
+        operator_executor = {
+            "==": lambda x, y: x == y,
+            ">": lambda x, y: x > y,
+            ">=": lambda x, y: x >= y,
+            "<": lambda x, y: x < y,
+            "<=": lambda x, y: x <= y,
+            "!=": lambda x, y: x != y,
+        }
+
+        result = operator_executor.get(operator)(value_left, value_right)
+    else:
+        # then is just <json_dot_syntax>
+        result = extract_from_json(data, expression)
+
+    LOG.info(f"result '{result}' from expression '{expression}' in data {data}")
+
+    return result
 
 
 class ReferenceHelper:
@@ -89,8 +116,8 @@ class ReferenceHelper:
         self._config = config
 
     def _get_from_secret(self, ref: str) -> Union[str, None]:
-        # TODO get secret value
-        pass
+        _, secrets = extractor_secrets()
+        return secrets.get(ref)
 
     def _get_from_last(self, ref: str, context: dict) -> Union[str, None]:
         """ Retrieve from the last record fetched by this extraction"""
@@ -104,6 +131,7 @@ class ReferenceHelper:
     def _retrieve_reference_value(
         self, text: str, context: Optional[dict] = None
     ) -> str:
+        LOG.info(f"text to replace refs '{text}'")
         # Extract reference params with syntax ${from::value, default}
         pattern = re.compile("(\${+[A-Za-z0-9 ,.;:/_-]+})")
         refs = pattern.findall(text)
@@ -135,6 +163,7 @@ class ReferenceHelper:
             # replace ref by retrieved value
             text = text.replace(ref, value)
 
+        LOG.info(f"retrieve ref result '{text}'")
         return text
 
     def replace(self, json: dict, context: Optional[dict] = None) -> dict:
@@ -165,19 +194,21 @@ class ApiExtractorService:
             data=auth.refresh_token.endpoint.body,
             headers=auth.refresh_token.endpoint.headers
         )
+        LOG.info(f"resp from refresh token: {resp}")
 
         access_token = extract_from_json(
             resp, auth.refresh_token.response_token_key)
+        
+        LOG.info(f"access token refreshed '{access_token}'")
 
         # set access token in config and on secret if is a reference secret::
         auth.access_token = access_token
+        self._config.auth = auth  # update reference to auth values
         # TODO update token on db or secret
-
-        return access_token
     
     def extract(self, extraction: Extraction) -> dict:
-        # TODO execute extraction
         if extraction.pagination == "sequential":
+            all_data = []
             page = int(extraction.pagination.parameters.start_from)
             continue_to_next = True
             while continue_to_next:
@@ -193,15 +224,30 @@ class ApiExtractorService:
                     headers=extraction.endpoint.headers
                 )
 
+                LOG.info(f"data result: {resp} on extraction {extraction.id}")
+                
+                if extraction.data_key:
+                    data = resp.get(extraction.data_key)
+                else:
+                    data = resp
+
+                if isinstance(data, dict):
+                    data = [data] # covert to list before append to all_data
+
+                all_data.extend(data)
+
                 page += 1
                 continue_to_next = evaluate_expression(
                     data=resp,
                     expression=extraction.pagination.parameters.there_are_more_pages
                 )
+            return all_data
+        
+        # TODO create 'link' pagination
 
 
     def run(self):
-        access_token = self.refresh_token(self._config.auth)
+        self.refresh_token(self._config.auth)
 
         for extraction_config in self._config.extractions:
             filled_extraction_data = self._references.replace(
@@ -210,10 +256,13 @@ class ApiExtractorService:
             )
 
             extraction = Extraction(**filled_extraction_data)
+            data = self.extract(extraction)
 
-            
+            LOG.info(f"all data from extraction {extraction.id}: {data}")
 
-            
+            # TODO convert data to csv
+
+            # TODO send to s3
 
 
 def handler(event, context):
@@ -222,9 +271,4 @@ def handler(event, context):
     configs = get_configs(event)
 
     for config in configs:
-        # TODO run ApiExtractorService
-
-        # TODO convert data to csv
-
-        # TODO send to s3
-        pass
+        ApiExtractorService(config).run()
