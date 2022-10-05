@@ -5,10 +5,10 @@ from uuid import uuid4
 
 from boto3.dynamodb.conditions import Key
 
-from src.api.constants import API_KEYS_SECRET_NAME
+from src.common.constants import API_KEYS_SECRET_NAME
+from src.common.aws import api_keys_secrets, config_db_table
 
 from .schemas import ApiConfig
-from .utils import api_keys_secrets, config_db_table
 
 # API CONFIG 
 

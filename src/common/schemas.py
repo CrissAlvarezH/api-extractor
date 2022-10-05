@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, validator
 
 class Endpoint(BaseModel):
     url: str
+    method: Optional[str]
     query_params: Optional[dict]
     headers: Optional[dict]
     body: Optional[dict]

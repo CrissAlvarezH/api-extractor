@@ -5,10 +5,10 @@ from typing import Optional
 import boto3
 from pydantic import ValidationError
 
-from src.api.constants import API_EXTRACTOR_FUNCTION_NAME
+from src.common.constants import API_EXTRACTOR_FUNCTION_NAME
 
 from .utils import Response
-from .repository import (
+from src.common.repository import (
     add_or_update_api_key, get_api_config, list_api_config_history,
     list_api_configs, put_config, remove_api_key, remove_config
 )
@@ -72,7 +72,7 @@ def invoke_api_extractor(id: str):
     client = boto3.client("lambda")
     resp = client.invoke_async(
         FunctionName=API_EXTRACTOR_FUNCTION_NAME,
-        InvokeArgs=bytes(json.dumps({"id": id}), encoding="utf8")
+        InvokeArgs=bytes(json.dumps({"extractor_config_id": id}), encoding="utf8")
     )
     return Response(resp)
 

@@ -1,6 +1,6 @@
 import json
 
-from .repository import get_api_key_name
+from ..common.repository import get_api_key_name
 from .routes import delete_api_key, delete_config, generate_api_key, get_config_history, get_configs, create_config, invoke_api_extractor, update_config
 from .utils import Response
 
