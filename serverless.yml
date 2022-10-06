@@ -7,6 +7,11 @@ provider:
   region: us-east-2
   runtime: python3.8
 
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!venv/**'
+
 custom: ${file(./config.js)}
 
 functions:
@@ -50,6 +55,8 @@ functions:
   ApiExtractor:
     role: ExtractorRol
     handler: src.extractor.main.handler
+    environment:
+      STAGE: ${opt:stage, 'dev'}
     events:
       - eventBridge:
           enabled: true
@@ -115,6 +122,11 @@ resources:
         Description: "Secrets for Extractor"
         Name: api-extractor-config/${opt:stage, 'dev'}/extractor-secrets
         SecretString: '{"zoho_refresh_token": "", "zoho_client_id": "", "zoho_client_secret": "", "zoho_access_token": ""}'
+
+    ExtractorOutputBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: api-extractor-output-${opt:stage, 'dev'}
        
     ApiConfigRol:
       Type: AWS::IAM::Role
@@ -201,12 +213,19 @@ resources:
                   Action:
                     - secretsmanager:*
                   Resource:
+                    - Ref: 'ApiConfigKeysSecret'
                     - Ref: 'ExtractorSecret'
                 - Effect: Allow
                   Action:
                     - dynamodb:*
                   Resource:
                     - 'Fn::GetAtt': ['ApiExtractorExecutionLogsTable', 'Arn']
+                    - 'Fn::GetAtt': ['ApiExtractorConfigTable', 'Arn']
+                - Effect: Allow
+                  Action:
+                    - s3:*
+                  Resource:
+                    - 'Fn::GetAtt': ['ExtractorOutputBucket', 'Arn']
 
   Outputs:
     RootApiKey:

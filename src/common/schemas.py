@@ -2,6 +2,8 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
+from src.common.constants import DESTINY_BUCKET_NAME
+
 
 class Endpoint(BaseModel):
     url: str
@@ -32,8 +34,13 @@ class LinkPaginationParams(BaseModel):
 
 
 class Pagination(BaseModel):
-    type: str
+    type: str = Field()
     parameters: Union[SequentialPaginationParams, LinkPaginationParams]
+
+
+class S3Path(BaseModel):
+    bucket: Optional[str] = Field(DESTINY_BUCKET_NAME)
+    folder: Optional[str] = Field("/")
 
 
 class Extraction(BaseModel):
@@ -42,7 +49,7 @@ class Extraction(BaseModel):
     endpoint: Endpoint
     data_key: Optional[str]
     pagination: Pagination
-    s3_destiny: str
+    s3_destiny: S3Path = Field(S3Path())
     data_schema: Optional[dict]
 
 

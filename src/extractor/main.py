@@ -1,16 +1,21 @@
 import logging
 import re
+from datetime import datetime
 from typing import List, Union, Optional
+from io import StringIO
 
+import pandas
 import requests
+import boto3
 from requests import request
-from src.common.aws import extractor_secrets
 
+from src.common.aws import extractor_secrets
 from src.common.repository import get_api_config, list_api_configs
 from src.common.schemas import ApiAuth, ApiConfig, Extraction
 
 
 LOG = logging.getLogger("handler")
+LOG.setLevel(logging.INFO)
 
 
 def get_configs(event) -> List[ApiConfig]:
@@ -19,15 +24,14 @@ def get_configs(event) -> List[ApiConfig]:
     return config that coming on event on extractor_config_api key
     otherwise return all configs
     """
-    config = []
     config_id = event.get("extractor_config_id")
     if config_id:
-        config = get_api_config(config_id)
-        if not config:
+        resp = get_api_config(config_id)
+        if "Item" not in resp:
             LOG.error(f"config {config_id} does not exists")
             return
             
-        configs = [config]
+        configs = [resp["Item"]]
     else:
         # return all configs
         configs = list_api_configs()["Items"]
@@ -123,7 +127,7 @@ class ReferenceHelper:
         """ Retrieve from the last record fetched by this extraction"""
         extraction_id = context.get("extraction_id")
         # TODO get ref value
-        pass
+        return None
 
     def _get_from_self(self, ref: str) -> Union[str, None]:
         return extract_from_json(self._config.dict(), ref)
@@ -131,7 +135,6 @@ class ReferenceHelper:
     def _retrieve_reference_value(
         self, text: str, context: Optional[dict] = None
     ) -> str:
-        LOG.info(f"text to replace refs '{text}'")
         # Extract reference params with syntax ${from::value, default}
         pattern = re.compile("(\${+[A-Za-z0-9 ,.;:/_-]+})")
         refs = pattern.findall(text)
@@ -155,15 +158,18 @@ class ReferenceHelper:
             elif retrieve_from == "self":
                 value = self._get_from_self(ref_value)
             elif retrieve_from == "last":
-                value = self._get_from_last(value, context)
+                value = self._get_from_last(ref_value, context)
             
             if value is None:
                 value = default
 
+            LOG.info(f"replace ref: '{ref}', with value: '{value}' on text: '{text}'")
+            if value is None:
+                raise ValueError(f"Ref {ref} return None")
+
             # replace ref by retrieved value
             text = text.replace(ref, value)
 
-        LOG.info(f"retrieve ref result '{text}'")
         return text
 
     def replace(self, json: dict, context: Optional[dict] = None) -> dict:
@@ -176,7 +182,89 @@ class ReferenceHelper:
         return json
 
 
-class ApiExtractorService:
+class EndpointExtractorService:
+    _extraction: Extraction
+
+    def __init__(self, extraction: Extraction):
+        self._extraction = extraction
+
+    def paginate(self):
+        page = int(self._extraction.pagination.parameters.start_from)
+        url = self._extraction.endpoint.url
+        continue_to_next = True
+        while continue_to_next:
+            query_params = self._extraction.endpoint.query_params
+            if self._extraction.pagination.type == "sequential":
+                query_params[self._extraction.pagination.parameters.param_name] = page
+
+            resp = request(
+                self._extraction.endpoint.method or "get",
+                url,
+                params=query_params,
+                data=self._extraction.endpoint.body,
+                headers=self._extraction.endpoint.headers
+            )
+            
+            if resp.status_code > 299 or resp.status_code < 200:
+                LOG.error(f"response status: {resp.status_code}, body: {resp.text}")
+                # TODO raise custom exception
+            
+            response_body = resp.json()
+
+            if self._extraction.data_key:
+                data = response_body.get(self._extraction.data_key)
+            else:
+                data = response_body
+
+            if data is None:
+                data = []
+            elif isinstance(data, dict):
+                data = [data] # covert to list before append to all_data
+
+            yield data
+
+            if self._extraction.pagination.type == "sequential":
+                page += 1
+                continue_to_next = evaluate_expression(
+                    data=response_body,
+                    expression=self._extraction.pagination.parameters.there_are_more_pages
+                ) 
+
+            elif self._extraction.pagination.type == "link":
+                url = extract_from_json(
+                    response_body,
+                    self._extraction.pagination.parameters.next_link
+                )
+                continue_to_next = url is not None
+
+    def apply_schema(self, data: List[dict]) -> List[dict]:
+        def iterate_schema(schema, data, result):
+            for key_schema, value_schema in schema.items():
+                if isinstance(value_schema, dict):
+                    iterate_schema(value_schema, data.get(key_schema), result)
+                else:
+                    result[value_schema] = data.get(key_schema)  
+
+        result = []
+        for item in data:
+            result_item = {}
+            iterate_schema(self._extraction.data_schema, item, result_item)
+            result.append(result_item)
+
+        return result
+    
+    def run(self) -> List[dict]:
+        all_data = []
+        for page in self.paginate():
+            all_data.extend(page) 
+
+        if self._extraction.data_schema:
+            all_data = self.apply_schema(all_data)
+
+        return all_data
+
+
+class ApiService:
     _config: ApiConfig
     _references: ReferenceHelper
 
@@ -194,10 +282,11 @@ class ApiExtractorService:
             data=auth.refresh_token.endpoint.body,
             headers=auth.refresh_token.endpoint.headers
         )
-        LOG.info(f"resp from refresh token: {resp}")
+        response_body = resp.json()
+        LOG.info(f"resp from refresh token: {response_body}")
 
         access_token = extract_from_json(
-            resp, auth.refresh_token.response_token_key)
+            response_body, auth.refresh_token.response_token_key)
         
         LOG.info(f"access token refreshed '{access_token}'")
 
@@ -205,46 +294,6 @@ class ApiExtractorService:
         auth.access_token = access_token
         self._config.auth = auth  # update reference to auth values
         # TODO update token on db or secret
-    
-    def extract(self, extraction: Extraction) -> dict:
-        if extraction.pagination == "sequential":
-            all_data = []
-            page = int(extraction.pagination.parameters.start_from)
-            continue_to_next = True
-            while continue_to_next:
-                method = extraction.endpoint.method or "get"
-                resp = request(
-                    method,
-                    extraction.endpoint.url,
-                    params={
-                        **extraction.endpoint.query_params,
-                        extraction.pagination.parameters.param_name: page
-                    },
-                    data=extraction.endpoint.body,
-                    headers=extraction.endpoint.headers
-                )
-
-                LOG.info(f"data result: {resp} on extraction {extraction.id}")
-                
-                if extraction.data_key:
-                    data = resp.get(extraction.data_key)
-                else:
-                    data = resp
-
-                if isinstance(data, dict):
-                    data = [data] # covert to list before append to all_data
-
-                all_data.extend(data)
-
-                page += 1
-                continue_to_next = evaluate_expression(
-                    data=resp,
-                    expression=extraction.pagination.parameters.there_are_more_pages
-                )
-            return all_data
-        
-        # TODO create 'link' pagination
-
 
     def run(self):
         self.refresh_token(self._config.auth)
@@ -254,15 +303,25 @@ class ApiExtractorService:
                 extraction_config.dict(), 
                 context={"extraction_id": extraction_config.id}
             )
-
             extraction = Extraction(**filled_extraction_data)
-            data = self.extract(extraction)
+
+            data = EndpointExtractorService(extraction).run()
 
             LOG.info(f"all data from extraction {extraction.id}: {data}")
 
-            # TODO convert data to csv
+            # Convert data to csv
+            df = pandas.DataFrame(data)
 
-            # TODO send to s3
+            # Send to s3
+            buffer = StringIO()
+            df.to_sql(buffer)
+            s3 = boto3.resource("s3")
+
+            filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+            s3.Object(
+                extraction.s3_destiny.bucket,
+                filename,
+            ).put(Body=buffer.getvalue())
 
 
 def handler(event, context):
@@ -271,4 +330,4 @@ def handler(event, context):
     configs = get_configs(event)
 
     for config in configs:
-        ApiExtractorService(config).run()
+        ApiService(config).run()

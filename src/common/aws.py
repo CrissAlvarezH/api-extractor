@@ -17,7 +17,7 @@ def config_db_table():
 
 def get_secret_value(secret_id: str):
     client = boto3.client("secretsmanager")
-    secret = client.get_secret_value(SecretId=API_KEYS_SECRET_NAME)
+    secret = client.get_secret_value(SecretId=secret_id)
     value = json.loads(secret.get("SecretString"))
     return client, value
 

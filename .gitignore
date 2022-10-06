@@ -18,6 +18,7 @@ var/
 *.egg
 node_modules
 .env
+sandbox.py
 
 # Serverless directories
 .serverless
