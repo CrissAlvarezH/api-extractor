@@ -11,6 +11,7 @@ package:
   patterns:
     - '!node_modules/**'
     - '!venv/**'
+    - '!.git/**'
 
 custom: ${file(./config.js)}
 
@@ -18,6 +19,9 @@ functions:
   ConfigApi:
     role: ApiConfigRol
     handler: src.api.main.handler
+    layers:
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-requests:7
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pydantic:5
     environment:
       STAGE: ${opt:stage, 'dev'}
     events:
@@ -55,6 +59,10 @@ functions:
   ApiExtractor:
     role: ExtractorRol
     handler: src.extractor.main.handler
+    layers:
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pandas:8
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-requests:7
+      - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pydantic:5
     environment:
       STAGE: ${opt:stage, 'dev'}
     events:
@@ -225,11 +233,13 @@ resources:
                   Action:
                     - s3:*
                   Resource:
-                    - 'Fn::GetAtt': ['ExtractorOutputBucket', 'Arn']
+                    - 'Fn::Join':
+                      - '/'
+                      - 
+                        - 'Fn::GetAtt': ['ExtractorOutputBucket', 'Arn']
+                        - '*'
 
   Outputs:
     RootApiKey:
       Value: '${self:custom.root_api_key}'
-
-plugins:
-  - serverless-python-requirements
+  
