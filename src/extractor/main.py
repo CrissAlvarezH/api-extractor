@@ -8,7 +8,7 @@ LOG.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    LOG.info("Input: ", event)
+    LOG.info(f"Input: {event}")
 
     configs = get_configs(event)
 

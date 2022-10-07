@@ -1,7 +1,9 @@
+from decimal import Decimal
+import json
 import logging
 from typing import List
+from src.common.aws import config_db_table
 
-from src.common.repository import get_api_config, list_api_configs
 from src.common.schemas import ApiConfig
 
 
@@ -16,19 +18,20 @@ def get_configs(event) -> List[ApiConfig]:
     otherwise return all configs
     """
     config_id = event.get("extractor_config_id")
+    table, _ = config_db_table()
     if config_id:
-        resp = get_api_config(config_id)
+        resp = table.get_item(Key={"id": config_id})
         if "Item" not in resp:
             LOG.error(f"config {config_id} does not exists")
             return
             
         configs = [resp["Item"]]
     else:
-        # return all configs
-        configs = list_api_configs()["Items"]
+        configs = table.scan()["Items"]
 
-    LOG.info(f"Configs to execute {configs}")
-    return [ApiConfig(**c) for c in configs]
+    configs = [ApiConfig(**c) for c in configs]
+    LOG.info(f"Configs to execute {[str(c) for c in configs]}")
+    return configs
 
 
 def extract_from_json(data: dict, dot_syntax: str) -> str:
@@ -89,5 +92,18 @@ def evaluate_expression(data: dict, expression: str) -> bool:
         # then is just <json_dot_syntax>
         result = extract_from_json(data, expression)
 
-    LOG.info(f"result '{result}' from expression '{expression}' in data {data}")
+    LOG.info(f"result '{result}' from expression '{expression}'")
     return result
+
+
+def dumps_json(obj):
+    """ parse a json and convert decimals to str
+    
+    Because decimal is not supported by dynamodb
+    """
+    class DecimalEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Decimal):
+                return str(obj)
+            return json.JSONEncoder.default(self, obj)
+    return json.dumps(obj, cls=DecimalEncoder)

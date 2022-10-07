@@ -6,13 +6,13 @@ import boto3
 from pydantic import ValidationError
 
 from src.common.constants import API_EXTRACTOR_FUNCTION_NAME
-
-from .utils import Response
+from src.common.secrets import add_or_update_api_key, remove_api_key
 from src.common.repository import (
-    add_or_update_api_key, get_api_config, list_api_config_history,
-    list_api_configs, put_config, remove_api_key, remove_config
+    get_api_config, list_api_config_history, list_api_configs, 
+    list_extraction_execution_logs, put_config, remove_config
 )
 
+from .utils import Response
 
 # API CONFIGS
 
@@ -29,7 +29,7 @@ def get_configs(id: Optional[str] = None):
 
 def create_config(body: dict, api_key: str):
     try:
-        config = put_config(api_key, body)
+        config = put_config(body, api_key=api_key)
         return Response(config)
     except ValidationError as e:
         errors = str(e).split("\n")
@@ -42,7 +42,7 @@ def update_config(id: str, body: dict, api_key: str):
         return Response({"error": "Not found"}, status=404)
 
     try:
-        config = put_config(api_key, body, id)
+        config = put_config(body, id, api_key)
         return Response(config)
     except ValidationError as e:
         errors = str(e).split("\n")
@@ -74,6 +74,11 @@ def invoke_api_extractor(id: str):
         FunctionName=API_EXTRACTOR_FUNCTION_NAME,
         InvokeArgs=bytes(json.dumps({"extractor_config_id": id}), encoding="utf8")
     )
+    return Response(resp)
+
+
+def get_extractor_execution_logs(extractor_id: str):
+    resp = list_extraction_execution_logs(extractor_id)
     return Response(resp)
 
 

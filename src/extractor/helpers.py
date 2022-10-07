@@ -3,6 +3,7 @@ import logging
 from typing import Union, Optional
 
 from src.common.aws import extractor_secrets
+from src.common.repository import get_last_execution_log
 from src.common.schemas import ApiConfig
 
 from .utils import extract_from_json
@@ -34,8 +35,8 @@ class ReferenceHelper:
     def _get_from_last(self, ref: str, context: dict) -> Union[str, None]:
         """ Retrieve from the last record fetched by this extraction"""
         extraction_id = context.get("extraction_id")
-        # TODO get ref value
-        return None
+        last_log = get_last_execution_log(extraction_id)
+        return last_log.get("last", {}).get(ref) if last_log else None
 
     def _get_from_self(self, ref: str) -> Union[str, None]:
         return extract_from_json(self._config.dict(), ref)
@@ -73,6 +74,11 @@ class ReferenceHelper:
 
             if value is None:
                 raise ValueError(f"Ref {ref} return None")
+
+            if isinstance(value, str) and value == "":
+                LOG.warning(f"value for ref '{ref}' is empty")
+
+            LOG.info(f"reference '{ref}' replaced by 'value'")
 
             # replace ref by retrieved value
             text = text.replace(ref, value)

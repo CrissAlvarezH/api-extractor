@@ -52,6 +52,9 @@ class Extraction(BaseModel):
     s3_destiny: S3Path = Field(S3Path())
     data_schema: Optional[dict]
 
+    def __str__(self) -> str:
+        return f"{self.id}: {self.name}"
+
 
 class ApiConfig(BaseModel):
     id: str
@@ -66,3 +69,6 @@ class ApiConfig(BaseModel):
             if len(match) == 2:
                 raise ValueError("There are two extraction with same id")
         return v
+
+    def __str__(self) -> str:
+        return f"{self.id}: {self.name}"

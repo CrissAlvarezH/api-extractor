@@ -8,6 +8,7 @@ import requests
 import boto3
 from requests import request
 
+from src.common.repository import insert_execution_log, update_access_token
 from src.common.schemas import ApiAuth, ApiConfig, Extraction
 
 from .utils import extract_from_json, evaluate_expression
@@ -91,14 +92,14 @@ class EndpointExtractorService:
         return result
     
     def run(self) -> List[dict]:
+        LOG.info(f'run extraction: {self._extraction}')
         all_data = []
+
         for page in self.paginate():
             all_data.extend(page) 
 
         if self._extraction.data_schema:
             all_data = self.apply_schema(all_data)
-
-        # TODO insert execution log
 
         return all_data
 
@@ -132,30 +133,36 @@ class ApiService:
         # set access token in config and on secret if is a reference secret::
         auth.access_token = access_token
         self._config.auth = auth  # update reference to auth values
-        # TODO update token on db or secret
+        update_access_token(self._config.id, access_token)
 
     def convert_to_csv(self, data: dict):
         df = pandas.DataFrame(data)
         df["ext__timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         return df
 
-    def send_to_s3(self, df, extraction):
+    def send_to_s3(self, df, extraction: Extraction):
         buffer = StringIO()
         df.to_csv(buffer, index=False)
         s3 = boto3.resource("s3")
 
         filename = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+        file_path = extraction.s3_destiny.folder + filename
         s3.Object(
             extraction.s3_destiny.bucket,
-            filename,
+            file_path,
         ).put(Body=buffer.getvalue())
 
+        return f"s3://{extraction.s3_destiny.bucket}{file_path}"
 
     def run(self):
-        self.refresh_token(self._config.auth)
-
         for extraction_config in self._config.extractions:
+            data = []
+            error = None
+            s3_path = None
+
             try:
+                self.refresh_token(self._config.auth)
+
                 # replace references on extraction
                 filled_extraction_data = self._references.replace(
                     extraction_config.dict(), 
@@ -167,9 +174,21 @@ class ApiService:
 
                 df = self.convert_to_csv(data)
 
-                self.send_to_s3(df, extraction)
+                s3_path = self.send_to_s3(df, extraction)
 
-                LOG.info(f"successfully data loaded for extraction {extraction.id}")
+                LOG.info(f"successfully extraction {extraction} loaded on {s3_path}")
             except Exception as e:
+                error = str(e)
                 LOG.error(f"extraction {extraction_config.id}, exc: {str(e)}")
                 LOG.exception(e)
+
+            # Insert logs
+            last_item = data[len(data) - 1] if data else None
+            insert_execution_log(
+                extraction=extraction_config,
+                config=self._config,
+                data_inserted_len=len(data) if data else 0,
+                last=last_item,
+                destiny=s3_path,
+                error=error,
+            )

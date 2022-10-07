@@ -3,8 +3,8 @@ import json
 import boto3
 
 from .constants import (
-    CONFIG_HISTORY_TABLE_NAME, CONFIG_TABLE_NAME, API_KEYS_SECRET_NAME,
-    EXTRACTOR_SECRETS_SECRET_NAME
+    CONFIG_HISTORY_TABLE_NAME, CONFIG_TABLE_NAME, API_KEYS_SECRET_NAME, 
+    EXTRACTOR_EXECUTION_LOGS_TABLE_NAME, EXTRACTOR_SECRETS_SECRET_NAME
 )
 
 
@@ -13,6 +13,12 @@ def config_db_table():
     table = db.Table(CONFIG_TABLE_NAME)
     history_table = db.Table(CONFIG_HISTORY_TABLE_NAME)
     return table, history_table
+
+
+def execution_logs_table():
+    db = boto3.resource("dynamodb")
+    table = db.Table(EXTRACTOR_EXECUTION_LOGS_TABLE_NAME)
+    return table
 
 
 def get_secret_value(secret_id: str):

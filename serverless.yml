@@ -47,6 +47,9 @@ functions:
           path: /config/{id}/execute
           method: post
       - httpApi:
+          path: /extractions/{id}/logs
+          method: get
+      - httpApi:
           path: /api-keys
           method: post
       - httpApi:
@@ -173,6 +176,7 @@ resources:
                   Resource:
                     - 'Fn::GetAtt': ['ApiExtractorConfigTable', 'Arn']
                     - 'Fn::GetAtt': ['ApiExtractorConfigHistoryTable', 'Arn']
+                    - 'Fn::GetAtt': ['ApiExtractorExecutionLogsTable', 'Arn']
                 - Effect: Allow
                   Action:
                     - secretsmanager:*

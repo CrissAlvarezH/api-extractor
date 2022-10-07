@@ -1,14 +1,13 @@
-import json
 from typing import Optional, Union
 from datetime import datetime
 from uuid import uuid4
 
 from boto3.dynamodb.conditions import Key
 
-from src.common.constants import API_KEYS_SECRET_NAME
-from src.common.aws import api_keys_secrets, config_db_table
+from src.common.aws import config_db_table, execution_logs_table
+from src.extractor.utils import dumps_json
 
-from .schemas import ApiConfig
+from .schemas import ApiConfig, Extraction
 
 # API CONFIG 
 
@@ -37,7 +36,11 @@ def get_api_config(id: str) -> dict:
     return table.get_item(Key={"id": id})
 
 
-def put_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
+def put_config(
+    body: dict,
+    id: Optional[str] = None,
+    api_key: Optional[str] = None
+) -> dict:
     """ Insert or update config, and insert on history table each new update"""
     table, history_table = config_db_table()
     
@@ -70,12 +73,21 @@ def put_config(api_key: str, body: dict, id: Optional[str] = None) -> dict:
     table.put_item(Item=api_config)
 
     # insert on history table
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    history_table.put_item(
-        Item={**api_config, "updated_at": now, "api_key": api_key}
-    )
+    if api_key:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        history_table.put_item(
+            Item={**api_config, "updated_at": now, "api_key": api_key}
+        )
 
     return api_config
+
+
+def update_access_token(config_id: str, access_token: str):
+    config_data = get_api_config(config_id)["Item"]
+    config = ApiConfig(**config_data)
+    config.auth.access_token = access_token
+
+    put_config(body=config.dict(), id=config_id)
 
 
 def remove_config(id: str, api_key: str):
@@ -91,32 +103,58 @@ def remove_config(id: str, api_key: str):
     )
 
 
-# API KEYS SECRET
+# EXTRACTOR LOGS
 
-def get_api_key_name(key_value: str) -> Union[str, None]:
-    _, api_keys = api_keys_secrets()
+def insert_execution_log(
+    extraction: Extraction,
+    config: ApiConfig,
+    destiny: str,
+    last: dict,
+    data_inserted_len: int,
+    error: Optional[str] = None
+):
+    table = execution_logs_table()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    table.put_item(Item={
+        "extraction_name": extraction.name,
+        "extraction_id": str(extraction.id),
+        "config_id": str(config.id),
+        "config_name": config.name,
+        "data_inserted_len": str(data_inserted_len),
+        "destiny": destiny,
+        "last": dumps_json(last),
+        "success": "true" if error is None else "false",
+        "error": error,
+        "created_at": now
+    })    
 
-    found = [k[0] for k in api_keys.items() if k[1] == key_value]
-    return found[0] if len(found) > 0 else None
+
+def list_extraction_execution_logs(
+    id: Optional[str] = None,
+    limit: int = 50,
+    created_after_that: Optional[str] = None,
+) -> dict:
+    table = execution_logs_table()
+
+    params = {
+        "ScanIndexForward": False,
+        "Limit": limit,
+    }
+
+    if id:
+        params["KeyConditionExpression"] = Key("extraction_id").eq(id)
+
+    if created_after_that:
+        params["ExclusiveStartKey"] = {
+            "extraction_id": id,
+            "created_at": created_after_that
+        }
+
+    return table.query(**params)
 
 
-def add_or_update_api_key(name: str, value: str):
-    client, api_keys = api_keys_secrets()
-    api_keys.update({name: value})
-    client.update_secret(
-        SecretId=API_KEYS_SECRET_NAME,
-        SecretString=json.dumps(api_keys)
-    )
-
-    return value
-
-
-def remove_api_key(name: str):
-    client, api_keys = api_keys_secrets()
-
-    del api_keys[name]
-
-    client.update_secret(
-        SecretId=API_KEYS_SECRET_NAME,
-        SecretString=json.dumps(api_keys)
-    )
+def get_last_execution_log(extraction_id: str) -> Union[dict, None]:
+    resp = list_extraction_execution_logs(extraction_id, limit=1)
+    items = resp.get("Items", [])
+    return items[0] if len(items) > 0 else None
+    

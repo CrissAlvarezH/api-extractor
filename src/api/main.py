@@ -1,7 +1,13 @@
 import json
 
-from ..common.repository import get_api_key_name
-from .routes import delete_api_key, delete_config, generate_api_key, get_config_history, get_configs, create_config, invoke_api_extractor, update_config
+from src.common.secrets import get_api_key_name
+
+from .routes import (
+    delete_api_key, delete_config, generate_api_key,
+    get_config_history, get_configs, create_config,
+    get_extractor_execution_logs, invoke_api_extractor,
+    update_config
+)
 from .utils import Response
 
 
@@ -44,5 +50,9 @@ def handler(event, context):
     
     elif path == "/api-keys/{name}/refresh":
         response = generate_api_key(api_key_name, path_params.get("name"))
+
+    elif path == "/extractions/{id}/logs":
+        response = get_extractor_execution_logs(
+            path_params.get("id"))
 
     return response.json
