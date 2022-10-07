@@ -182,7 +182,8 @@ class ApiService:
             s3_path = None
 
             try:
-                self.refresh_token(self._config.auth)
+                if self._config.auth.refresh_token:
+                    self.refresh_token(self._config.auth)
 
                 # replace references on extraction
                 filled_extraction_data = self._references.replace(

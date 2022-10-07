@@ -132,7 +132,7 @@ resources:
       Properties:
         Description: "Secrets for Extractor"
         Name: api-extractor-config/${opt:stage, 'dev'}/extractor-secrets
-        SecretString: '{"zoho_refresh_token": "", "zoho_client_id": "", "zoho_client_secret": "", "zoho_access_token": ""}'
+        SecretString: '{"zoho_refresh_token": "", "zoho_client_id": "", "zoho_client_secret": ""}'
 
     ExtractorOutputBucket:
       Type: AWS::S3::Bucket

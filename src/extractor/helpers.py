@@ -1,7 +1,7 @@
 import re
 import logging
 import json
-from typing import Union, Optional
+from typing import Tuple, Union, Optional
 
 from requests import JSONDecodeError
 
@@ -55,6 +55,24 @@ class ReferenceHelper:
     def _get_from_self(self, ref: str) -> Union[str, None]:
         return extract_from_json(self._config.dict(), ref)
 
+    @classmethod
+    def destructure_reference(cls, ref: str) -> Tuple[str, str, str]:
+        """ remove ${ and } from ref ex: ${self::auth, def} -> self::auth.token, def """
+        inside = ref[2:-1]  
+
+        # get expression and default value
+        if "," in inside:
+            expression, default = inside.split(",")
+            default = default.strip()
+        else:
+            expression = inside
+            default = None
+
+        # expression is like: self::name.second or last::age
+        retrieve_from, ref_value = expression.strip().split("::")
+
+        return retrieve_from, ref_value, default
+
     def _retrieve_reference_value(
         self, text: str, context: Optional[dict] = None
     ) -> str:
@@ -63,18 +81,7 @@ class ReferenceHelper:
         refs = pattern.findall(text)
 
         for ref in refs:
-            # remove ${ and } from ref ex: ${self::auth, def} -> self::auth.token, def
-            inside = ref[2:-1]  
-
-            # get expression and default value
-            if "," in inside:
-                expression, default = inside.split(",")
-                default = default.strip()
-            else:
-                expression = inside
-                default = None
-
-            retrieve_from, ref_value = expression.strip().split("::")
+            retrieve_from, ref_value, default = self.destructure_reference(ref)
 
             if retrieve_from == "secret":
                 value = self._get_from_secret(ref_value)
@@ -87,7 +94,7 @@ class ReferenceHelper:
                 value = default
 
             if value is None:
-                raise ValueError(f"Ref {ref} return None")
+                raise ValueError(f"Ref {ref} return null and don't have default value")
 
             if isinstance(value, str) and value == "":
                 LOG.warning(f"value for ref '{ref}' is empty")

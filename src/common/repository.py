@@ -122,7 +122,7 @@ def insert_execution_log(
         "config_name": config.name,
         "data_inserted_len": str(data_inserted_len),
         "destiny": destiny,
-        "last": replace_decimal(last),
+        "last": replace_decimal(last) if last else None,
         "success": "true" if error is None else "false",
         "error": error,
         "created_at": now
