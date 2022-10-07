@@ -1,5 +1,7 @@
 import logging
 
+from src.common.logs import reset_logging
+
 from .utils import get_configs
 from .services import ApiService
 
@@ -13,6 +15,7 @@ def handler(event, context):
     configs = get_configs(event)
 
     for config in configs:
+        reset_logging(config.id)
         try:
             ApiService(config).run()
         except Exception as e:

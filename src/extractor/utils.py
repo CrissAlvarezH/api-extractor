@@ -96,14 +96,10 @@ def evaluate_expression(data: dict, expression: str) -> bool:
     return result
 
 
-def dumps_json(obj):
-    """ parse a json and convert decimals to str
-    
-    Because decimal is not supported by dynamodb
-    """
-    class DecimalEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, Decimal):
-                return str(obj)
-            return json.JSONEncoder.default(self, obj)
-    return json.dumps(obj, cls=DecimalEncoder)
+def replace_decimal(obj: dict):
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            replace_decimal(value)
+        elif isinstance(value, int) or isinstance(value, float):
+            obj[key] = str(value)
+    return obj

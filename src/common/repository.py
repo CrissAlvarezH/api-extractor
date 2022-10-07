@@ -5,7 +5,7 @@ from uuid import uuid4
 from boto3.dynamodb.conditions import Key
 
 from src.common.aws import config_db_table, execution_logs_table
-from src.extractor.utils import dumps_json
+from src.extractor.utils import replace_decimal
 
 from .schemas import ApiConfig, Extraction
 
@@ -122,7 +122,7 @@ def insert_execution_log(
         "config_name": config.name,
         "data_inserted_len": str(data_inserted_len),
         "destiny": destiny,
-        "last": dumps_json(last),
+        "last": replace_decimal(last),
         "success": "true" if error is None else "false",
         "error": error,
         "created_at": now
@@ -158,3 +158,12 @@ def get_last_execution_log(extraction_id: str) -> Union[dict, None]:
     items = resp.get("Items", [])
     return items[0] if len(items) > 0 else None
     
+
+def get_last_item_from_last_time(extraction_id: str) -> Union[dict, None]:
+    resp = get_last_execution_log(extraction_id)
+    if resp is None:
+        return None
+    last = resp.get("last")
+    if isinstance(last, str) and last == "null":
+        return None
+    return last

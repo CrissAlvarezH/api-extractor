@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from io import StringIO
 
 import pandas
@@ -8,10 +8,12 @@ import requests
 import boto3
 from requests import request
 
-from src.common.repository import insert_execution_log, update_access_token
+from src.common.repository import (
+    get_last_item_from_last_time, insert_execution_log, update_access_token
+)
 from src.common.schemas import ApiAuth, ApiConfig, Extraction
 
-from .utils import extract_from_json, evaluate_expression
+from .utils import extract_from_json, evaluate_expression, replace_decimal
 from .helpers import ReferenceHelper
 
 
@@ -91,17 +93,34 @@ class EndpointExtractorService:
 
         return result
     
+    def remove_first_if_last_is_equal(
+        self, data: List[dict], last: Optional[dict] = None
+    ) -> List[dict]:
+        """ remove first item if is the same that the last item of the last time """
+        first_item = data[0] if data else None
+        if first_item and last and replace_decimal(first_item) == last:
+            LOG.info("the first item is the same than the last, remove it")
+            return data[1:]
+        return data
+
     def run(self) -> List[dict]:
         LOG.info(f'run extraction: {self._extraction}')
-        all_data = []
+        data = []
 
         for page in self.paginate():
-            all_data.extend(page) 
+            data.extend(page) 
+
+        previous_last_item = get_last_item_from_last_time(self._extraction.id)
+        if len(data) == 0:
+            return [], previous_last_item
+
+        current_last_item = data[len(data) - 1] 
+        data = self.remove_first_if_last_is_equal(data, previous_last_item)
 
         if self._extraction.data_schema:
-            all_data = self.apply_schema(all_data)
+            data = self.apply_schema(data)
 
-        return all_data
+        return data, current_last_item
 
 
 class ApiService:
@@ -155,8 +174,10 @@ class ApiService:
         return f"s3://{extraction.s3_destiny.bucket}{file_path}"
 
     def run(self):
+        LOG.info(f"start to execute api config: {self._config}")
         for extraction_config in self._config.extractions:
             data = []
+            last_item = None
             error = None
             s3_path = None
 
@@ -170,20 +191,20 @@ class ApiService:
                 )
                 extraction = Extraction(**filled_extraction_data)
 
-                data = EndpointExtractorService(extraction).run()
+                data, last_item = EndpointExtractorService(extraction).run()
 
-                df = self.convert_to_csv(data)
+                if len(data) > 0:
+                    df = self.convert_to_csv(data)
+                    s3_path = self.send_to_s3(df, extraction)
+                    LOG.info(f"successfully extraction {extraction} loaded on {s3_path}")
+                else:
+                    LOG.warning(f"data is empty on extraction {extraction}")
 
-                s3_path = self.send_to_s3(df, extraction)
-
-                LOG.info(f"successfully extraction {extraction} loaded on {s3_path}")
             except Exception as e:
                 error = str(e)
                 LOG.error(f"extraction {extraction_config.id}, exc: {str(e)}")
                 LOG.exception(e)
 
-            # Insert logs
-            last_item = data[len(data) - 1] if data else None
             insert_execution_log(
                 extraction=extraction_config,
                 config=self._config,

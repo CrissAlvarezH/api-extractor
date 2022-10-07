@@ -1,6 +1,9 @@
 import re
 import logging
+import json
 from typing import Union, Optional
+
+from requests import JSONDecodeError
 
 from src.common.aws import extractor_secrets
 from src.common.repository import get_last_execution_log
@@ -36,7 +39,18 @@ class ReferenceHelper:
         """ Retrieve from the last record fetched by this extraction"""
         extraction_id = context.get("extraction_id")
         last_log = get_last_execution_log(extraction_id)
-        return last_log.get("last", {}).get(ref) if last_log else None
+        if last_log is None:
+            return None
+
+        last = last_log.get("last", {})
+
+        if isinstance(last, str) and last == "null":
+            return None
+
+        try:
+            return last.get(ref) if last else None
+        except Exception as e:
+            raise ValueError(f"error to get last reference: {ref}")
 
     def _get_from_self(self, ref: str) -> Union[str, None]:
         return extract_from_json(self._config.dict(), ref)
@@ -77,8 +91,8 @@ class ReferenceHelper:
 
             if isinstance(value, str) and value == "":
                 LOG.warning(f"value for ref '{ref}' is empty")
-
-            LOG.info(f"reference '{ref}' replaced by 'value'")
+            else:
+                LOG.info(f"reference '{ref}' replaced by '{value}'")
 
             # replace ref by retrieved value
             text = text.replace(ref, value)
