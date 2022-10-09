@@ -1,0 +1,509 @@
+{
+	"info": {
+		"_postman_id": "5442e805-7eb7-4532-b178-8db9aea71989",
+		"name": "API Extractor",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "3559511"
+	},
+	"item": [
+		{
+			"name": "Config",
+			"item": [
+				{
+					"name": "List api configs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/config",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retrieve api config",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/config/:config_id",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config",
+								":config_id"
+							],
+							"variable": [
+								{
+									"key": "config_id",
+									"value": "0369679795554797beedaecb6bf93793"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Execute api config",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/config/:config_id/execute",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config",
+								":config_id",
+								"execute"
+							],
+							"variable": [
+								{
+									"key": "config_id",
+									"value": "0369679795554797beedaecb6bf93793"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Execute api config",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{api-key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{domain}}/config/:config_id/execute",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"config",
+										":config_id",
+										"execute"
+									],
+									"variable": [
+										{
+											"key": "config_id",
+											"value": "77349259b7074bafa0f2e0f6492959c8"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"ResponseMetadata\": {\n        \"RequestId\": \"6827718f-9254-44c1-81f7-58915b676767\",\n        \"HTTPStatusCode\": 202,\n        \"HTTPHeaders\": {\n            \"date\": \"Mon, 03 Oct 2022 18:17:56 GMT\",\n            \"content-type\": \"application/json\",\n            \"content-length\": \"0\",\n            \"connection\": \"keep-alive\",\n            \"x-amzn-requestid\": \"6827718f-9254-44c1-81f7-58915b676767\"\n        },\n        \"RetryAttempts\": 0\n    },\n    \"Status\": 202\n}"
+						}
+					]
+				},
+				{
+					"name": "List extraction logs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/extractions/:extraction_id/logs",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"extractions",
+								":extraction_id",
+								"logs"
+							],
+							"variable": [
+								{
+									"key": "extraction_id",
+									"value": "79001ba8563e49c2b6a5e2bd819d7d19"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List api config editions history",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/config/:config_id/history",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config",
+								":config_id",
+								"history"
+							],
+							"query": [
+								{
+									"key": "last_updated_at",
+									"value": "2022-10-02 19:52:46",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "config_id",
+									"value": "5be6ac85c5ab4479909b96fb8177cada"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create api config",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Zoho\",\n    \"auth\": {\n        \"refresh_token\": {\n            \"endpoint\": {\n                \"url\": \"https://accounts.zoho.com/oauth/v2/token\",\n                \"query_params\": {\n                    \"refresh_token\": \"${secret::zoho_refresh_token}\",\n                    \"client_id\": \"${secret::zoho_client_id}\",\n                    \"client_secret\": \"${secret::zoho_client_secret}\",\n                    \"grant_type\": \"refresh_token\"\n                }\n            },\n            \"response_token_key\": \"access_token\"\n        },\n        \"access_token\": \"\"\n    },\n    \"extractions\": [\n        {\n            \"name\": \"deals\",\n            \"endpoint\": {\n                \"url\": \"https://www.zohoapis.com/crm/v2/deals\",\n                \"headers\": {\n                    \"Authorization\": \"Bearer ${self::auth.access_token}\",\n                    \"If-Modified-Since\": \"${last::Modified_Time, 2022-9-03T17:40:53-05:00}\"\n                },\n                \"query_params\": {\n                    \"sort_by\": \"Modified_Time\",\n                    \"sort_order\": \"asc\"\n                }\n            },\n            \"s3_destiny\": {\n                \"folder\": \"zoho/deals/\"\n            },\n            \"data_key\": \"data\",\n            \"pagination\": {\n                \"type\": \"sequential\",\n                \"parameters\": {\n                    \"param_name\": \"page\",\n                    \"start_from\": 1,\n                    \"there_are_more_pages\": \"info.more_records\"\n                }\n            }\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/config",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update api config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"extractions\": [\n        {\n            \"s3_destiny\": {\n                \"bucket\": \"api-extractor-output-prod\",\n                \"folder\": \"zoho/deals/\"\n            },\n            \"endpoint\": {\n                \"headers\": {\n                    \"Authorization\": \"Bearer ${self::auth.access_token}\",\n                    \"If-Modified-Since\": \"${last::Modified_Time, 2022-10-03T17:40:53-05:00}\"\n                },\n                \"method\": null,\n                \"body\": null,\n                \"url\": \"https://www.zohoapis.com/crm/v2/deals\",\n                \"query_params\": {\n                    \"sort_order\": \"asc\",\n                    \"sort_by\": \"Modified_Time\"\n                }\n            },\n            \"pagination\": {\n                \"type\": \"sequential\",\n                \"parameters\": {\n                    \"there_are_more_pages\": \"info.more_records\",\n                    \"param_name\": \"page\",\n                    \"start_from\": \"1\"\n                }\n            },\n            \"name\": \"deals\",\n            \"data_schema\": {\n                \"$currency_symbol\": \"currency\",\n                \"Owner\": {\n                    \"name\": \"owner_name\",\n                    \"id\": \"owner_id\"\n                }\n            },\n            \"id\": \"6a0c072f2a5448e8bc8a167005858548\",\n            \"data_key\": \"data\"\n        }\n    ],\n    \"auth\": {\n        \"access_token\": \"\",\n        \"refresh_token\": {\n            \"endpoint\": {\n                \"headers\": null,\n                \"method\": null,\n                \"body\": null,\n                \"url\": \"https://accounts.zoho.com/oauth/v2/token\",\n                \"query_params\": {\n                    \"refresh_token\": \"${secret::zoho_refresh_token}\",\n                    \"client_secret\": \"${secret::zoho_client_secret}\",\n                    \"grant_type\": \"refresh_token\",\n                    \"client_id\": \"${secret::zoho_client_id}\"\n                }\n            },\n            \"response_token_key\": \"access_token\"\n        }\n    },\n    \"id\": \"a77a8553389847ec9eb2bbd439f2699b\",\n    \"name\": \"Zoho\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/config/:config_id",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config",
+								":config_id"
+							],
+							"variable": [
+								{
+									"key": "config_id",
+									"value": "a77a8553389847ec9eb2bbd439f2699b"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete api config",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/config/:config_id",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"config",
+								":config_id"
+							],
+							"variable": [
+								{
+									"key": "config_id",
+									"value": "07868d74f32b4b6bab4373a0ef3f2a2f"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Delete api config",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{domain}}/config/:config_id",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"config",
+										":config_id"
+									],
+									"variable": [
+										{
+											"key": "config_id",
+											"value": "997e0b2921114b619afd91dbd5ebef9d"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Api keys",
+			"item": [
+				{
+					"name": "Create api key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"juan\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{domain}}/api-keys",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"api-keys"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Create api key",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{api-key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"juan\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{domain}}/api-keys",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api-keys"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"name\": \"juan\",\n    \"api_key\": \"f0ff698e2c149848ba35abe297d767df4a447edceb8a3103825754\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Refresh api key",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/api-keys/:key_name/refresh",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"api-keys",
+								":key_name",
+								"refresh"
+							],
+							"variable": [
+								{
+									"key": "key_name",
+									"value": "rootkey"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Refresh api key",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{api-key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{domain}}/api-keys/:key_name/refresh",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api-keys",
+										":key_name",
+										"refresh"
+									],
+									"variable": [
+										{
+											"key": "key_name",
+											"value": "cristian"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"name\": \"juan\",\n    \"api_key\": \"bae78cd0e514f4668d978c23472a86f531f4e20cb4ec09a91faa4c\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete api key",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{api-key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{domain}}/api-keys/:key_name",
+							"host": [
+								"{{domain}}"
+							],
+							"path": [
+								"api-keys",
+								":key_name"
+							],
+							"variable": [
+								{
+									"key": "key_name",
+									"value": "cristian"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

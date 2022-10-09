@@ -11,6 +11,7 @@ package:
   patterns:
     - '!node_modules/**'
     - '!venv/**'
+    - '!docs/**'
     - '!.git/**'
 
 custom: ${file(./config.js)}
