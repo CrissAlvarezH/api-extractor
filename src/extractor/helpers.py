@@ -96,10 +96,15 @@ class ReferenceHelper:
             if value is None:
                 raise ValueError(f"Ref {ref} return null and don't have default value")
 
+            # logging
             if isinstance(value, str) and value == "":
                 LOG.warning(f"value for ref '{ref}' is empty")
             else:
-                LOG.info(f"reference '{ref}' replaced by '{value}'")
+                if retrieve_from == "secret":
+                    value_to_log = f"***{value[-3:]}" if len(value) > 5 else "****"
+                else:
+                    value_to_log = value
+                LOG.info(f"reference '{ref}' replaced by '{value_to_log}'")
 
             # replace ref by retrieved value
             text = text.replace(ref, value)
