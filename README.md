@@ -28,7 +28,8 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [PaginationParameters](#paginationparameters)
 			- [ConditionExpression](#conditionexpression)
 		- [JsonField](#jsonfield)
-	- [Autenticación por tokens](#autenticacion-por-tokens)
+	- [Autenticación por tokens](#autenticación-por-tokens)
+		- [Refresco de token automatico](#refresco-de-token-automatico)
 	- [Ejecutar una configuración](#ejecutar-una-configuración)
 - [Extracciones](#extracciones)
 	- [Endpoint a extraer](#endpoint-a-extraer)
@@ -223,4 +224,45 @@ Para obtener el number del account el user, se usa el JsonField
     user.account.number
 
 El cual retornará `2334`
+
+
+# Autenticación por tokens
+
+En la configuración se puede especificar el access token que se va a usar en el apartado de `auth.access_token` y este se puede usar luego en las extracciones usando referencias.
+
+## Refresco de token automatico
+
+Si el token tiene algun tiempo limite de uso y luego explira, podemos configurar el refresco del token, para esto debemos introducir la configuración en `auth.refresh_token` en el cual podemos especificar el endpoit en el cual se realiza el refresh y luego, especificar cual campo de la respuesta de ese endpoint contiene el token renovado, usando el campo `auth.refresh_token.response_token_key`
+
+**Por ejemplo:** 
+suponiendo que para renovar un token debo hacer una petición al endpoint
+
+    https://accounts.com/oauth/v2/token?refresh_token=afe21e5ac3f9ea12639
+
+Y este responde con:
+
+``` json
+{
+	"mytoken":  "fa146b8e6a67366fd991c7d65",
+	"api_domain":  "https://www.api.com",
+	"token_type":  "Bearer",
+	"expires_in":  3600
+}
+```
+Para este caso la configuración deberá ser la siguiente
+
+``` json
+{
+	"auth": {
+		"endpoint": {
+			"url": "https://accounts.com/oauth/v2/",
+			"query_params": {
+				"refresh_token": "afe21e5ac3f9ea12639"
+			}
+		},
+		"response_token_key": "mytoken"
+	}
+}
+```
+
 
