@@ -25,8 +25,6 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - [Configuración para el api extractor](#configuración-para-el-api-extractor)
 	- [Estructura general](#estructura-general)
 		- [Endpoint](#endpoint)
-		- [PaginationParameters](#paginationparameters)
-			- [ConditionExpression](#conditionexpression)
 		- [JsonField](#jsonfield)
 	- [Autenticación por tokens](#autenticación-por-tokens)
 		- [Refresco de token automatico](#refresco-de-token-automatico)
@@ -34,7 +32,9 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [Logs de ejecución](#logs-de-ejecución)
 - [Extracciones](#extracciones)
 	- [Endpoint a extraer](#endpoint-a-extraer)
-		- [Paginación](#paginacion)
+	- [Paginación](#paginación)
+		- [PaginationParameters](#paginationparameters)
+		- [ConditionExpression](#conditionexpression)
 	- [Esquema de la data](#esquema-de-la-data)
 	- [Destino en S3](#destino-en-s3)
 - [Referencias a **secret**, **last** y **self**](#referencias-a-secrets-last-y-self)
@@ -155,54 +155,7 @@ El unico campo obligatorio es la `url`, el resto son opcionales si no se necesit
 
 Este objeto se usa en el modulo de `auth` para especificar el endpoint al cual se tiene que apuntar para obtener el refresco del token, y tambien se usa en cada extracción para especificar el endpoint del cual se va a extraer la data
 
-## PaginationParameters
-Dependiendo del tipo de paginación los parametros son distintos.
-Para una paginación de tipo `sequential` los parametros son:
-``` json
-{
-	"param_name": "<string>"
-	"start_from": "<number>"
-	"there_are_more_pages": <ConditionExpression | JsonField>
-}
-```
-Cuando es de tipo `link` los parametros son
 
-``` json
-{
-	"next_link": <JsonField>
-}
-```
-Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
-
-
-### ConditionExpression
-Hace referencia a una condición que puede ser verdadera o falsa que tiene la siguiente estructura
-
-    <field> <operator> <field>
-
-Los `field` pueden ser, ya sea, un campo en el json de la respuesta de endpoint (por ejemplo `info.current_page`) o un valor como tal (por ejemplo `23`)
-El `operator` puede ser `==`, `<=`, `>=`, `!=`, `>` ó `<`.
-
-Ejemplo:
-
-Para el response:
-``` json
-{
-	"data": [
-		// ...
-	],
-	"info": {
-		"current_page": 2,
-		"total_pages": 10
-	}
-}
-```
-
-La condición podría ser
-
-    info.current_page < info.total_pages
-
-**Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
 
 ## JsonField
 
@@ -270,7 +223,7 @@ Para este caso la configuración deberá ser la siguiente
 
 Para ejecutar una configuració ya creada manualmente usamos el endpoint
 
-<img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execute-config.png'/>
+<img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execute-config.png'/>
 
 En el parametro **config_id** debemos poner el id de la configuración antes de dar click en **send**
 
@@ -280,7 +233,7 @@ Una vez enviada, se lanzará el lambda de extracción para ejecutar dicha config
 
 Para ver los logs del proceso debemos utilizar el siguiente endpoint
 
-<img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execution-logs.png'/>
+<img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execution-logs.png'/>
 
 Es importante poner el **extraction_id** el cual no se debe confundir con el id de la configuración, el **extraction_id** es el id que tiene cada item dentro de el campo `extractions` dentro de la configuración
 
@@ -300,3 +253,113 @@ Los logs tienen la siguiente estructura:
 	"created_at": "", // fecha de inserción del log
 }
 ```
+
+# Extracciones
+
+Las extracciones van configuradas en el capo `extractions` de la configuración del extractor vista en el punto de la [estructura general](#estructura-general).
+Cada extracción tiene la siguiente estructura
+
+``` json
+{
+	"name": "<string>",
+	"endpoint": <Endpoint>,
+	"data_key": <JsonField>,
+	"pagination": {
+		"type": "sequential | link",
+		"parameters": <PaginationParameters>
+	},
+	"data_schema": "<json>",
+	"s3_destiny": {
+		"bucket": "<string>",
+		"folder": "<string>"
+	}
+}
+```
+## Endpoint a extraer
+Este es el `endpoint` de la configuración de la extracción, y funciona exactamente igual que el [Endpoint](#endpoint) explicado previamente.
+
+En este caso representa el endpoint al cual se le va a consulta la data a extraer, para obtener esta data se usa el campo `data_key` el cual indica en cual campo de la respuesta del endpoint esta la data a extraer.
+
+Por ejemplo, si la respuesta del endpoint es
+
+``` json
+{
+	"result": [
+		...
+	],
+	"pagination": {
+		"current_page": 1,
+		"total_page": 3,
+		"on_page": 50
+	}
+}
+```
+Entonces el `data_key` debería ser `result`
+
+## Paginación
+
+Muchas apis estan paginadas, por lo que es necesario dar soporte a la paginación, por lo general existen dos tipos de paginación
+
+-  **Paginación secuencial**
+Se trata simplemente de una paginación donde existe un parametro **page** que indica en cual pagina nos encontramos, y cada pagina corresponde a un numero
+
+- **Paginación por link**
+En este caso no necesariamente hay un parametro llamado `page`, mas bien en la paginación nos dan el siguiente link al cual debemos apuntar para obtener la siguiente pagina de la data
+
+Dependiendo de cual sea la paginación del api que queremos consumir, debemos agregar unos parametros u otros, estos parametros se explican a continuación
+
+### PaginationParameters
+Dependiendo del tipo de paginación los parametros son distintos.
+Para una paginación de tipo `sequential` los parametros son:
+``` json
+{
+	"param_name": "<string>"
+	"start_from": "<number>"
+	"there_are_more_pages": <ConditionExpression | JsonField>
+}
+```
+- **param_name**:  expresa cual es el nombre del parametro que le indica al api el numero de la pagina, usualmente es `page`
+- **start_from**: indica desde cual pagina empezaremos
+- **there_are_more_pages**: es una expression condicional explicada mas adelante, o un field del json de la respuesta del api el cual es boolean e indica si hay mas paginas por recorrer
+
+
+Cuando es de tipo `link` los parametros son
+
+``` json
+{
+	"next_link": <JsonField>
+}
+```
+Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
+
+
+#### ConditionExpression
+Hace referencia a una condición que puede ser verdadera o falsa que tiene la siguiente estructura
+
+    <field> <operator> <field>
+
+Los `field` pueden ser, ya sea, un campo en el json de la respuesta de endpoint (por ejemplo `info.current_page`) o un valor como tal (por ejemplo `23`)
+El `operator` puede ser `==`, `<=`, `>=`, `!=`, `>` ó `<`.
+
+Ejemplo:
+
+Para el response:
+``` json
+{
+	"data": [
+		// ...
+	],
+	"info": {
+		"current_page": 2,
+		"total_pages": 10
+	}
+}
+```
+
+La condición podría ser
+
+    info.current_page < info.total_pages
+
+**Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
+
+
