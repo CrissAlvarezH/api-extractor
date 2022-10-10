@@ -19,7 +19,7 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - [Infraestructura](#infraestructura)
 - [Despliegue](#despliegue)
 - [API](#api)
-	- [Colección de Postman](#coleccion-de-postman)
+	- [Colección de Postman](#colección-de-postman)
 	- [Api keys](#api-keys)
 - [Configuración para el api extractor](#configuracion)
 	- [Estructura general](#coleccion-de-postman)
@@ -68,6 +68,33 @@ El anterior comando nos debe dar un output al final como el siguiente:
 	  HttpApiId: ********
 	  ServerlessDeploymentBucketName: *********
 	  HttpApiUrl: https://had73had0.us-east-2.amazonaws.com
-De todo esto lo que nos instere es el `HttpApiUrl` y el `RootApiKey` que nos servirán para consumir el api del lambda extractor.
+De todo esto lo que nos insteresa es el `HttpApiUrl` y el `RootApiKey` que nos servirán para consumir el api del lambda extractor.
 
 > **Nota:** una vez hecho el depliegue, por seguridad, borre el usuario que creó con permisos de administrador para propositos del despliegue
+
+
+# API
+
+El lamnda api extractor tiene un api para realizar la configuración, ejecutar manualmente y monitorear las ejecuciones del mismo
+
+## Colección de Postman
+
+El archivo `docs/postman_collection.json` dentro de este repo lo podemos importar en [Postman](https://www.postman.com/).
+Una vez importado veremos los siguientes endpoints para consumir
+
+<img width="300px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-collection.png'/>
+
+## Api keys
+
+Para poder hacer uso del api es necesario usar un api key, al realizar el despliegue este nos arroja un api key que pertenece al usuario root llamada `RootApiKey`, con esta key podemos consumir el api pero es recomendable crear mas api key para cada persona que va a hacer cambios en la configuración del api, ya que el nombre de cada api key queda guardado en el historial de cambios de la configuración, por lo que al tener un api key para cada persona podemos rastrear cada cambio de cada persona.
+
+Para crear, refrescar y borrar api keys usaremos la carpeta
+
+<img width="300px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-api-keys.png'/>
+
+> **Importante:** Solo el api key del root puede crear otras api keys y no se puede borrar desde el api
+
+Estas api keys se guardan en un [secret de aws](https://aws.amazon.com/es/secrets-manager/) el cual es creado en el deploy y tiene el nombre `api-extractor-config/prod/apikeys`, desde aquí es la unica forma de borrar el api key del root, el resto se pueden borrar desde el api por Postman.
+
+<img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/aws-api-keys-secrets.png'/>
+
