@@ -154,7 +154,7 @@ El endpoint es la representació, en la configuración del extractor, de un endp
 El unico campo obligatorio es la `url`, el resto son opcionales si no se necesitan.
 ``` json
 {
-	"url" "<string>",
+	"url": "<string>",
 	"query_params": "<json>",
 	"headers": "<json>",
 	"body": "<json>"
