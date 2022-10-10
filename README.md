@@ -1,4 +1,5 @@
 
+
 # API Extractor
 Esta aplicación serverles permite consumir un api que sigue estandares REST y guardar la data en un archivo `.csv` en un bucket de [aws s3](https://aws.amazon.com/es/s3/) especificado en la configuración.
 
@@ -21,11 +22,17 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - [API](#api)
 	- [Colección de Postman](#colección-de-postman)
 	- [Api keys](#api-keys)
-- [Configuración para el api extractor](#configuracion)
-	- [Estructura general](#coleccion-de-postman)
-	- [Autenticación por tokens](#autenticacion-por-tokens)
+- [Configuración para el api extractor](#configuración-para-el-api-extractor)
+	- [Estructura general](#estructura-general)
+		- [Endpoint](#endpoint)
+		- [PaginationParameters](#paginationparameters)
+			- [ConditionExpression](#conditionexpression)
+		- [JsonField](#jsonfield)
+	- [Autenticación por tokens](#autenticación-por-tokens)
+		- [Refresco de token automatico](#refresco-de-token-automatico)
+	- [Ejecutar una configuración](#ejecutar-una-configuración)
 - [Extracciones](#extracciones)
-	- [Endpoint a extraer](#endpoint)
+	- [Endpoint a extraer](#endpoint-a-extraer)
 		- [Paginación](#paginacion)
 	- [Esquema de la data](#esquema-de-la-data)
 	- [Destino en S3](#destino-en-s3)
@@ -97,4 +104,165 @@ Para crear, refrescar y borrar api keys usaremos la carpeta
 Estas api keys se guardan en un [secret de aws](https://aws.amazon.com/es/secrets-manager/) el cual es creado en el deploy y tiene el nombre `api-extractor-config/prod/apikeys`, desde aquí es la unica forma de borrar el api key del root, el resto se pueden borrar desde el api por Postman.
 
 <img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/aws-api-keys-secrets.png'/>
+
+
+# Configuración para el api extractor
+
+La configuración del extractor se hace mediante el api, si usted importó la colección de Postman podrá ver los siguientes endpoints ahí
+
+<img width="300px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-api-config-folder.png'/>
+
+De los cuales los endpoints que nos sirven para crear, modificar y borrar una configuración para un api extractor son 
+
+- `List api configs` para listar todas las configuraciones existentes
+- `Retrieve api config` para ver una configuracion especificada por el id en los parametros del endpoint
+- `Create api config` para crear una configuración nueva
+- `Update api config` para actualizar pasando el id
+- `Delete api config` para borrar una configuración
+
+## Estructura general
+
+``` json
+{
+	"name":  "<string>",
+	"auth":  {
+		"refresh_token":  {
+			"endpoint":  <Endpoint>,
+			"response_token_key":  <JsonField>
+		},
+		"access_token":  "<string>"
+	},
+	"extractions":  [
+		{...},
+		{...},
+		{...}
+	]
+}
+```
+
+## Endpoint
+El endpoint es la representació, en la configuración del extractor, de un endpoint en la vida real, con su `url` y demas parametros como los `query_params` que son los parametros que van en la url, los `headers` y el `body`.
+El unico campo obligatorio es la `url`, el resto son opcionales si no se necesitan.
+``` json
+{
+	"url": "<string>",
+	"query_params": "<json>",
+	"headers": "<json>",
+	"body": "<json>"
+}
+```
+
+Este objeto se usa en el modulo de `auth` para especificar el endpoint al cual se tiene que apuntar para obtener el refresco del token, y tambien se usa en cada extracción para especificar el endpoint del cual se va a extraer la data
+
+## PaginationParameters
+Dependiendo del tipo de paginación los parametros son distintos.
+Para una paginación de tipo `sequential` los parametros son:
+``` json
+{
+	"param_name": "<string>"
+	"start_from": "<number>"
+	"there_are_more_pages": <ConditionExpression | JsonField>
+}
+```
+Cuando es de tipo `link` los parametros son
+
+``` json
+{
+	"next_link": <JsonField>
+}
+```
+Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
+
+
+### ConditionExpression
+Hace referencia a una condición que puede ser verdadera o falsa que tiene la siguiente estructura
+
+    <field> <operator> <field>
+
+Los `field` pueden ser, ya sea, un campo en el json de la respuesta de endpoint (por ejemplo `info.current_page`) o un valor como tal (por ejemplo `23`)
+El `operator` puede ser `==`, `<=`, `>=`, `!=`, `>` ó `<`.
+
+Ejemplo:
+
+Para el response:
+``` json
+{
+	"data": [
+		// ...
+	],
+	"info": {
+		"current_page": 2,
+		"total_pages": 10
+	}
+}
+```
+
+La condición podría ser
+
+    info.current_page < info.total_pages
+
+**Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
+
+## JsonField
+
+Se usa para especificar un campo en un json, cada campo se separa por un punto, por ejemplo, para el json
+
+``` json
+{
+	"user": {
+		"name": "Cristian",
+		"account": {
+			"number": 2334,
+			"type": "credit"
+		}
+	}
+}
+```
+
+Para obtener el number del account el user, se usa el JsonField
+
+    user.account.number
+
+El cual retornará `2334`
+
+
+# Autenticación por tokens
+
+En la configuración se puede especificar el access token que se va a usar en el apartado de `auth.access_token` y este se puede usar luego en las extracciones usando referencias.
+
+## Refresco de token automatico
+
+Si el token tiene algun tiempo limite de uso y luego explira, podemos configurar el refresco del token, para esto debemos introducir la configuración en `auth.refresh_token` en el cual podemos especificar el endpoit en el cual se realiza el refresh y luego, especificar cual campo de la respuesta de ese endpoint contiene el token renovado, usando el campo `auth.refresh_token.response_token_key`
+
+**Por ejemplo:** 
+suponiendo que para renovar un token debo hacer una petición al endpoint
+
+    https://accounts.com/oauth/v2/token?refresh_token=afe21e5ac3f9ea12639
+
+Y este responde con:
+
+``` json
+{
+	"mytoken":  "fa146b8e6a67366fd991c7d65",
+	"api_domain":  "https://www.api.com",
+	"token_type":  "Bearer",
+	"expires_in":  3600
+}
+```
+Para este caso la configuración deberá ser la siguiente
+
+``` json
+{
+	"auth": {
+		"endpoint": {
+			"url": "https://accounts.com/oauth/v2/",
+			"query_params": {
+				"refresh_token": "afe21e5ac3f9ea12639"
+			}
+		},
+		"response_token_key": "mytoken"
+	}
+}
+```
+
 
