@@ -132,19 +132,9 @@ De los cuales los endpoints que nos sirven para crear, modificar y borrar una co
 		"access_token":  "<string>"
 	},
 	"extractions":  [
-		{
-			"name":  "<string>",
-			"endpoint":  <Endpoint>,
-			"s3_destiny":  {
-				"bucket": "<string>"
-				"folder":  "<string>"
-			},
-			"data_key":  <JsonField>,
-			"pagination":  {
-				"type":  "sequential | link",
-				"parameters":  <PaginationParameters>
-			}
-		}
+		{...},
+		{...},
+		{...}
 	]
 }
 ```
