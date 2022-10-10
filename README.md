@@ -31,6 +31,7 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 	- [Autenticación por tokens](#autenticación-por-tokens)
 		- [Refresco de token automatico](#refresco-de-token-automatico)
 	- [Ejecutar una configuración](#ejecutar-una-configuración)
+		- [Logs de ejecución](#logs-de-ejecución)
 - [Extracciones](#extracciones)
 	- [Endpoint a extraer](#endpoint-a-extraer)
 		- [Paginación](#paginacion)
@@ -226,11 +227,11 @@ Para obtener el number del account el user, se usa el JsonField
 El cual retornará `2334`
 
 
-# Autenticación por tokens
+## Autenticación por tokens
 
 En la configuración se puede especificar el access token que se va a usar en el apartado de `auth.access_token` y este se puede usar luego en las extracciones usando referencias.
 
-## Refresco de token automatico
+### Refresco de token automatico
 
 Si el token tiene algun tiempo limite de uso y luego explira, podemos configurar el refresco del token, para esto debemos introducir la configuración en `auth.refresh_token` en el cual podemos especificar el endpoit en el cual se realiza el refresh y luego, especificar cual campo de la respuesta de ese endpoint contiene el token renovado, usando el campo `auth.refresh_token.response_token_key`
 
@@ -265,4 +266,37 @@ Para este caso la configuración deberá ser la siguiente
 }
 ```
 
+## Ejecutar una configuración
 
+Para ejecutar una configuració ya creada manualmente usamos el endpoint
+
+<img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execute-config.png'/>
+
+En el parametro **config_id** debemos poner el id de la configuración antes de dar click en **send**
+
+Una vez enviada, se lanzará el lambda de extracción para ejecutar dicha configuración, el endpoint responderá de inmediato pero el proceso de ejecución tardará segun la configuración del mismo y la cantidad de data que deba extraer.
+
+### Logs de ejecución
+
+Para ver los logs del proceso debemos utilizar el siguiente endpoint
+
+<img width="700px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execution-logs.png'/>
+
+Es importante poner el **extraction_id** el cual no se debe confundir con el id de la configuración, el **extraction_id** es el id que tiene cada item dentro de el campo `extractions` dentro de la configuración
+
+Los logs tienen la siguiente estructura:
+
+``` json
+{
+	"extraction_name": "",
+	"extraction_id": "",
+	"config_name": "",
+	"config_id": "",
+	"success": "true | false",
+	"error": "null | error_message", // error en caso de ocurrir
+	"data_inserted_len": "number", // cantidad de data extraida
+	"destiny": "", // ruta en s3 del archivo .csv
+	"last": "<json>", // ultimo item extraido la
+	"created_at": "", // fecha de inserción del log
+}
+```
