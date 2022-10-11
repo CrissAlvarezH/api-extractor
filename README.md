@@ -471,7 +471,10 @@ Si no se especifica el `s3_destinty` tomará los valores default
 
 # Referencias
 
-En la sitaxis de la configuración es permitido agregar referencias a valores que son dinamicos, ya sea porque estan guardados en otro lugar, por ejemplo en la base de datos o en secreto de aws, o porque es un valor cambiante dentro de la misma configuración, como por ejemplo el token que se renueva
+En la sitaxis de la configuración es permitido agregar referencias a valores que son dinamicos, ya sea porque estan guardados en otro lugar como en la base de datos o en un secreto de aws, o porque es un valor cambiante dentro de la misma configuración y necesitamos referenciar siempre el valor actual de ese campo.
+
+Un ejemplo de sintaxis para declarar una referencia es `$(self::auth.access_token, token_default)`. 
+La estructura es `$(<tipo>::<referencia>, <valor por defecto>)`
 
 Los tipos de referencia son
 
