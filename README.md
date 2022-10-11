@@ -37,7 +37,7 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [ConditionExpression](#conditionexpression)
 	- [Esquema de la data](#esquema-de-la-data)
 	- [Destino en S3](#destino-en-s3)
-- [Referencias a **secret**, **last** y **self**](#referencias-a-secrets-last-y-self)
+- [Referencias a **secret**, **last** y **self**](#referencias)
 - [Ejemplos](#ejemplos)
 	- [Zoho](#zoho)
 
@@ -468,6 +468,95 @@ Es la ruta en donde guardará el archivo .csv con el resultado de la extracción
 }
 ```
 Si no se especifica el `s3_destinty` tomará los valores default
+
+# Referencias
+
+En la sitaxis de la configuración es permitido agregar referencias a valores que son dinamicos, ya sea porque estan guardados en otro lugar, por ejemplo en la base de datos o en secreto de aws, o porque es un valor cambiante dentro de la misma configuración, como por ejemplo el token que se renueva
+
+Los tipos de referencia son
+
+- ## self
+
+Este hace referencia al mismo json de configuración, es muy usado por ejemplo para hacer referencia al token, ya que este se refresca cada vez que se ejecuta, para poder usarlo podemos usar la referencia, por ejemplo:
+
+``` json
+{
+	"auth": {
+		"refresh_token": {
+			"endpoint": {
+				"url": "https://accounts.com/oauth/v2/",
+				"query_params": {
+					"refresh_token": "afe21e5ac3f9ea12639"
+				}
+			},
+			"response_token_key": "mytoken"
+		},
+		"access_token": ""
+	},
+	"extractions": [
+		{
+			...,
+			"endpoint": {
+				...,
+				"headers": {
+					"Authorization": "Bearer ${self::auth.access_token}"
+				}
+			}
+		}
+	]
+}
+```
+
+En este caso estamo mandando el token guardado en `auth.access_token` dentro de la misma configuració y que es renovado cada vez gracias a la configuracion del `refresh_token`.
+
+- ## last
+
+Cada vez que se ejecuta una extracción se insertan [logs de la ejecución](#logs-de-ejecución) dentro del cual se guarda el ultimo item extraido, el **last** hace referencia a este ultimo item, por lo que si queremos hacer referencia a algun campo del ultimo item de la ejecución previa lo podemos hacer de esta forma:
+
+``` json
+{
+	...,
+	"extractions": [
+		{
+			...,
+			"endpoint": {
+				...,
+				"query_params": {
+					"start_from": "$(last::id, 1)"
+				}
+			}
+		}
+	]
+}
+```
+
+Es esta configuración estamos mandando al endpoint de extracción el `id` del ultimo item extraido a travez del query param `start_from` y en caso de ser la primera vez en ejecutar o de no tener un item previo guradado, tomará el valor por dejecto `1`
+
+- ## secret
+
+Esta referencia va a buscar el valor dentro del secret llamado `api-extractor-config/prod/extractor-secrets` el cual es creado en el deploy.
+La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `auth` ya que ahí se suele colocar valores delicados como apy keys, client ids, etc, por ejemplo:
+
+``` json
+{
+	"auth": {
+		"refresh_token": {
+			"endpoint": {
+				"url": "https://accounts.zoho.com/oauth/v2/token",
+				"query_params": {
+					"refresh_token": "${secret::zoho_refresh_token}",
+					"client_id": "${secret::zoho_client_id}",
+					"client_secret": "${secret::zoho_client_secret}",
+					"grant_type": "refresh_token"
+				}
+			},
+			"response_token_key": "access_token"
+		},
+		"access_token": ""
+	}
+}
+```
+
 
 
 
