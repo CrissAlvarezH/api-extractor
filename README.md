@@ -313,8 +313,8 @@ Dependiendo del tipo de paginación los parametros son distintos.
 Para una paginación de tipo `sequential` los parametros son:
 ``` json
 {
-	"param_name": "<string>"
-	"start_from": "<number>"
+	"param_name": "<string>",
+	"start_from": "<number>",
 	"there_are_more_pages": <ConditionExpression | JsonField>
 }
 ```
