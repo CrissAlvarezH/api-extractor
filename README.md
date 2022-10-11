@@ -390,7 +390,7 @@ Si el response del endpoint es:
 }
 ```
 
-Y queremos guardar solo el `name` y el `account`, podemos crear un `data_schema` así:
+Y queremos guardar solo el `name`, `account` y `city`, podemos crear un `data_schema` así:
 
 ``` json
 {
