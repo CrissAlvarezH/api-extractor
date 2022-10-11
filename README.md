@@ -533,12 +533,12 @@ Cada vez que se ejecuta una extracción se insertan [logs de la ejecución](#log
 }
 ```
 
-Es esta configuración estamos mandando al endpoint de extracción el `id` del ultimo item extraido a travez del query param `start_from` y en caso de ser la primera vez en ejecutar o de no tener un item previo guradado, tomará el valor por dejecto `1`
+Es esta configuración estamos mandando al endpoint de extracción el `id` del ultimo item extraido a travez del query param `start_from` y en caso de ser la primera vez en ejecutar o de no tener un item previo guardado, tomará el valor por dejecto `1`
 
 - ## secret
 
 Esta referencia va a buscar el valor dentro del secret llamado `api-extractor-config/prod/extractor-secrets` el cual es creado en el deploy.
-La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `auth` ya que ahí se suele colocar valores delicados como apy keys, client ids, etc, por ejemplo:
+La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `auth` ya que ahí se suele colocar valores delicados como api keys, client ids, etc, por ejemplo:
 
 ``` json
 {
@@ -616,6 +616,6 @@ La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/
 }
 ```
 
-Una vez creada esta configuraci[on se debe agregar al secret `api-extractor-config/prod/extractor-secrets` lo valores que estan en el modulo de `auth`, así:
+Una vez creada esta configuracioón se debe agregar al secret `api-extractor-config/prod/extractor-secrets` lo valores que estan en la parte de `auth`, así:
 
 <img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/example-zoho-secrets.png'/>
