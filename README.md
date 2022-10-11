@@ -25,18 +25,19 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - [Configuración para el api extractor](#configuración-para-el-api-extractor)
 	- [Estructura general](#estructura-general)
 		- [Endpoint](#endpoint)
-		- [PaginationParameters](#paginationparameters)
-			- [ConditionExpression](#conditionexpression)
 		- [JsonField](#jsonfield)
 	- [Autenticación por tokens](#autenticación-por-tokens)
 		- [Refresco de token automatico](#refresco-de-token-automatico)
 	- [Ejecutar una configuración](#ejecutar-una-configuración)
+		- [Logs de ejecución](#logs-de-ejecución)
 - [Extracciones](#extracciones)
 	- [Endpoint a extraer](#endpoint-a-extraer)
-		- [Paginación](#paginacion)
+	- [Paginación](#paginación)
+		- [PaginationParameters](#paginationparameters)
+		- [ConditionExpression](#conditionexpression)
 	- [Esquema de la data](#esquema-de-la-data)
 	- [Destino en S3](#destino-en-s3)
-- [Referencias a **secret**, **last** y **self**](#referencias-a-secrets-last-y-self)
+- [Referencias a **secret**, **last** y **self**](#referencias)
 - [Ejemplos](#ejemplos)
 	- [Zoho](#zoho)
 
@@ -154,54 +155,7 @@ El unico campo obligatorio es la `url`, el resto son opcionales si no se necesit
 
 Este objeto se usa en el modulo de `auth` para especificar el endpoint al cual se tiene que apuntar para obtener el refresco del token, y tambien se usa en cada extracción para especificar el endpoint del cual se va a extraer la data
 
-## PaginationParameters
-Dependiendo del tipo de paginación los parametros son distintos.
-Para una paginación de tipo `sequential` los parametros son:
-``` json
-{
-	"param_name": "<string>"
-	"start_from": "<number>"
-	"there_are_more_pages": <ConditionExpression | JsonField>
-}
-```
-Cuando es de tipo `link` los parametros son
 
-``` json
-{
-	"next_link": <JsonField>
-}
-```
-Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
-
-
-### ConditionExpression
-Hace referencia a una condición que puede ser verdadera o falsa que tiene la siguiente estructura
-
-    <field> <operator> <field>
-
-Los `field` pueden ser, ya sea, un campo en el json de la respuesta de endpoint (por ejemplo `info.current_page`) o un valor como tal (por ejemplo `23`)
-El `operator` puede ser `==`, `<=`, `>=`, `!=`, `>` ó `<`.
-
-Ejemplo:
-
-Para el response:
-``` json
-{
-	"data": [
-		// ...
-	],
-	"info": {
-		"current_page": 2,
-		"total_pages": 10
-	}
-}
-```
-
-La condición podría ser
-
-    info.current_page < info.total_pages
-
-**Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
 
 ## JsonField
 
@@ -226,11 +180,11 @@ Para obtener el number del account el user, se usa el JsonField
 El cual retornará `2334`
 
 
-# Autenticación por tokens
+## Autenticación por tokens
 
 En la configuración se puede especificar el access token que se va a usar en el apartado de `auth.access_token` y este se puede usar luego en las extracciones usando referencias.
 
-## Refresco de token automatico
+### Refresco de token automatico
 
 Si el token tiene algun tiempo limite de uso y luego explira, podemos configurar el refresco del token, para esto debemos introducir la configuración en `auth.refresh_token` en el cual podemos especificar el endpoit en el cual se realiza el refresh y luego, especificar cual campo de la respuesta de ese endpoint contiene el token renovado, usando el campo `auth.refresh_token.response_token_key`
 
@@ -264,5 +218,345 @@ Para este caso la configuración deberá ser la siguiente
 	}
 }
 ```
+
+## Ejecutar una configuración
+
+Para ejecutar una configuració ya creada manualmente usamos el endpoint
+
+<img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execute-config.png'/>
+
+En el parametro **config_id** debemos poner el id de la configuración antes de dar click en **send**
+
+Una vez enviada, se lanzará el lambda de extracción para ejecutar dicha configuración, el endpoint responderá de inmediato pero el proceso de ejecución tardará segun la configuración del mismo y la cantidad de data que deba extraer.
+
+### Logs de ejecución
+
+Para ver los logs del proceso debemos utilizar el siguiente endpoint
+
+<img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/postman-execution-logs.png'/>
+
+Es importante poner el **extraction_id** el cual no se debe confundir con el id de la configuración, el **extraction_id** es el id que tiene cada item dentro de el campo `extractions` dentro de la configuración
+
+Los logs tienen la siguiente estructura:
+
+``` json
+{
+	"extraction_name": "",
+	"extraction_id": "",
+	"config_name": "",
+	"config_id": "",
+	"success": "true | false",
+	"error": "null | error_message", // error en caso de ocurrir
+	"data_inserted_len": "number", // cantidad de data extraida
+	"destiny": "", // ruta en s3 del archivo .csv
+	"last": "<json>", // ultimo item extraido la
+	"created_at": "", // fecha de inserción del log
+}
+```
+
+# Extracciones
+
+Las extracciones van configuradas en el capo `extractions` de la configuración del extractor vista en el punto de la [estructura general](#estructura-general).
+Cada extracción tiene la siguiente estructura
+
+``` json
+{
+	"name": "<string>",
+	"endpoint": <Endpoint>,
+	"data_key": <JsonField>,
+	"pagination": {
+		"type": "sequential | link",
+		"parameters": <PaginationParameters>
+	},
+	"data_schema": "<json>",
+	"s3_destiny": {
+		"bucket": "<string>",
+		"folder": "<string>"
+	}
+}
+```
+## Endpoint a extraer
+Este es el `endpoint` de la configuración de la extracción, y funciona exactamente igual que el [Endpoint](#endpoint) explicado previamente.
+
+En este caso representa el endpoint al cual se le va a consulta la data a extraer, para obtener esta data se usa el campo `data_key` el cual indica en cual campo de la respuesta del endpoint esta la data a extraer.
+
+Por ejemplo, si la respuesta del endpoint es
+
+``` json
+{
+	"result": [
+		...
+	],
+	"pagination": {
+		"current_page": 1,
+		"total_page": 3,
+		"on_page": 50
+	}
+}
+```
+Entonces el `data_key` debería ser `result`
+
+## Paginación
+
+Muchas apis estan paginadas, por lo que es necesario dar soporte a la paginación, por lo general existen dos tipos de paginación
+
+-  **Paginación secuencial**
+Se trata simplemente de una paginación donde existe un parametro **page** que indica en cual pagina nos encontramos, y cada pagina corresponde a un numero
+
+- **Paginación por link**
+En este caso no necesariamente hay un parametro llamado `page`, mas bien en la paginación nos dan el siguiente link al cual debemos apuntar para obtener la siguiente pagina de la data
+
+Dependiendo de cual sea la paginación del api que queremos consumir, debemos agregar unos parametros u otros, estos parametros se explican a continuación
+
+### PaginationParameters
+Dependiendo del tipo de paginación los parametros son distintos.
+Para una paginación de tipo `sequential` los parametros son:
+``` json
+{
+	"param_name": "<string>"
+	"start_from": "<number>"
+	"there_are_more_pages": <ConditionExpression | JsonField>
+}
+```
+- **param_name**:  expresa cual es el nombre del parametro que le indica al api el numero de la pagina, usualmente es `page`
+- **start_from**: indica desde cual pagina empezaremos
+- **there_are_more_pages**: es una expression condicional explicada mas adelante, o un field del json de la respuesta del api el cual es boolean e indica si hay mas paginas por recorrer
+
+
+Cuando es de tipo `link` los parametros son
+
+``` json
+{
+	"next_link": <JsonField>
+}
+```
+Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
+
+
+#### ConditionExpression
+Hace referencia a una condición que puede ser verdadera o falsa que tiene la siguiente estructura
+
+    <field> <operator> <field>
+
+Los `field` pueden ser, ya sea, un campo en el json de la respuesta de endpoint (por ejemplo `info.current_page`) o un valor como tal (por ejemplo `23`)
+El `operator` puede ser `==`, `<=`, `>=`, `!=`, `>` ó `<`.
+
+Ejemplo:
+
+Para el response:
+``` json
+{
+	"data": [
+		// ...
+	],
+	"info": {
+		"current_page": 2,
+		"total_pages": 10
+	}
+}
+```
+
+La condición podría ser
+
+    info.current_page < info.total_pages
+
+**Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
+
+
+## Esquema de la data
+
+Este campo es el `data_schema`, si no se especifica va a tomar toda la data tal cual como viene del api y la va a guardar en el archivo .csv, pero si queremos darle un formato especifico a la data y seleccionar solo ciertos campos podemos usar este esquema para eso, de la siguiente manera:
+
+El esquema es un json en el cual especificas los campos a guardar en el .csv, el nombre del key en cada json corresponde al key en la data del endpoint, y el nombre del value es el nombre de la columna que tendrá en el .csv, por ejemplo:
+
+Si el response del endpoint es:
+
+``` json
+{
+	"result": [
+		{
+			"name": "Cristian",
+			"age": 26,
+			"acount": 11111,
+			"city": "Montería"
+		},
+		{
+			"name": "Jose",
+			"age": 23,
+			"acount": 2222,
+			"city": "Bogotá"
+		}
+	]
+}
+```
+
+Y queremos guardar solo el `name` y el `account`, podemos crear un `data_schema` así:
+
+``` json
+{
+	"name": "user_name", 
+	"account": "user_account",
+	"city": "city"
+}
+```
+
+Esto dará como resultado el siguiente .csv
+
+
+| user_name         | user_account  | city          |
+|-------------------|---------------|---------------|
+| Cristian   	    | 11111         | Montería      |
+| Juan              | 2222          | Bogotá        |
+
+
+### Subelementos
+
+Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la siguiente.
+
+**Data:**
+``` json
+[
+	{
+		"type": "A",
+		"user": {
+			"name": "Cristian",
+			"account": {
+				"number": 3344
+			}
+		}
+	},
+	{
+		"type": "B",
+		"user": {
+			"name": "Juan",
+			"account": {
+				"number": 5555
+			}
+		}
+	}
+]
+```
+**Esquema:**
+``` json
+{
+	"type": "type",
+	"user": {
+		"name": "user_name",
+		"account": {
+			"number": "user_acc_number"
+		}
+	}
+}
+```
+
+**Resultado:**
+
+| type       | user_name         | user_acc_number   |
+|------------|-------------------|-------------------|
+|  A         | Cristian          | 3344   	         |
+|  B         | Juan              | 5555              | 
+
+
+## Destino en S3
+
+Es la ruta en donde guardará el archivo .csv con el resultado de la extracción, en la configuración es `s3_destiny` y se compone por un `bucket` y un `folder`
+
+``` json
+{
+	"bucket": "<string>",// default: api-extractor-output-prod
+	"folder": "<string>" // default: sin folder
+}
+```
+Si no se especifica el `s3_destinty` tomará los valores default
+
+# Referencias
+
+En la sitaxis de la configuración es permitido agregar referencias a valores que son dinamicos, ya sea porque estan guardados en otro lugar, por ejemplo en la base de datos o en secreto de aws, o porque es un valor cambiante dentro de la misma configuración, como por ejemplo el token que se renueva
+
+Los tipos de referencia son
+
+- ## self
+
+Este hace referencia al mismo json de configuración, es muy usado por ejemplo para hacer referencia al token, ya que este se refresca cada vez que se ejecuta, para poder usarlo podemos usar la referencia, por ejemplo:
+
+``` json
+{
+	"auth": {
+		"refresh_token": {
+			"endpoint": {
+				"url": "https://accounts.com/oauth/v2/",
+				"query_params": {
+					"refresh_token": "afe21e5ac3f9ea12639"
+				}
+			},
+			"response_token_key": "mytoken"
+		},
+		"access_token": ""
+	},
+	"extractions": [
+		{
+			...,
+			"endpoint": {
+				...,
+				"headers": {
+					"Authorization": "Bearer ${self::auth.access_token}"
+				}
+			}
+		}
+	]
+}
+```
+
+En este caso estamo mandando el token guardado en `auth.access_token` dentro de la misma configuració y que es renovado cada vez gracias a la configuracion del `refresh_token`.
+
+- ## last
+
+Cada vez que se ejecuta una extracción se insertan [logs de la ejecución](#logs-de-ejecución) dentro del cual se guarda el ultimo item extraido, el **last** hace referencia a este ultimo item, por lo que si queremos hacer referencia a algun campo del ultimo item de la ejecución previa lo podemos hacer de esta forma:
+
+``` json
+{
+	...,
+	"extractions": [
+		{
+			...,
+			"endpoint": {
+				...,
+				"query_params": {
+					"start_from": "$(last::id, 1)"
+				}
+			}
+		}
+	]
+}
+```
+
+Es esta configuración estamos mandando al endpoint de extracción el `id` del ultimo item extraido a travez del query param `start_from` y en caso de ser la primera vez en ejecutar o de no tener un item previo guradado, tomará el valor por dejecto `1`
+
+- ## secret
+
+Esta referencia va a buscar el valor dentro del secret llamado `api-extractor-config/prod/extractor-secrets` el cual es creado en el deploy.
+La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `auth` ya que ahí se suele colocar valores delicados como apy keys, client ids, etc, por ejemplo:
+
+``` json
+{
+	"auth": {
+		"refresh_token": {
+			"endpoint": {
+				"url": "https://accounts.zoho.com/oauth/v2/token",
+				"query_params": {
+					"refresh_token": "${secret::zoho_refresh_token}",
+					"client_id": "${secret::zoho_client_id}",
+					"client_secret": "${secret::zoho_client_secret}",
+					"grant_type": "refresh_token"
+				}
+			},
+			"response_token_key": "access_token"
+		},
+		"access_token": ""
+	}
+}
+```
+
+
 
 
