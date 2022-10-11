@@ -542,11 +542,11 @@ La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `
 	"auth": {
 		"refresh_token": {
 			"endpoint": {
-				"url": "https://accounts.zoho.com/oauth/v2/token",
+				"url": "https://accounts.com/oauth/v2/token",
 				"query_params": {
-					"refresh_token": "${secret::zoho_refresh_token}",
-					"client_id": "${secret::zoho_client_id}",
-					"client_secret": "${secret::zoho_client_secret}",
+					"refresh_token": "${secret::refresh_token}",
+					"client_id": "${secret::client_id}",
+					"client_secret": "${secret::client_secret}",
 					"grant_type": "refresh_token"
 				}
 			},
@@ -558,5 +558,61 @@ La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `
 ```
 
 
+# Ejemplos
 
+## Zoho
 
+La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/api/v3/get-records.html) es la siguiente:
+
+``` json
+{
+	"name":  "Zoho",
+	"auth":  {
+		"refresh_token":  {
+			"endpoint":  {
+				"url":  "https://accounts.zoho.com/oauth/v2/token",
+				"query_params":  {
+					"refresh_token":  "${secret::zoho_refresh_token}",
+					"client_id":  "${secret::zoho_client_id}",
+					"client_secret":  "${secret::zoho_client_secret}",
+					"grant_type":  "refresh_token"
+				}
+			},
+			"response_token_key":  "access_token"
+		},
+		"access_token":  ""
+	},
+	"extractions":  [
+		{
+			"name":  "deals",
+			"endpoint":  {
+				"url":  "https://www.zohoapis.com/crm/v2/deals",
+				"headers":  {
+					"Authorization":  "Bearer ${self::auth.access_token}",
+					"If-Modified-Since":  "${last::Modified_Time, 2020-09-03T17:40:53-05:00}"
+				},
+				"query_params":  {
+					"sort_by":  "Modified_Time",
+					"sort_order":  "asc"
+				}
+			},
+			"s3_destiny":  {
+				"folder":  "zoho/deals/"
+			},
+			"data_key":  "data",
+			"pagination":  {
+				"type":  "sequential",
+				"parameters":  {
+					"param_name":  "page",
+					"start_from":  1,
+					"there_are_more_pages":  "info.more_records"
+				}
+			}
+		}
+	]
+}
+```
+
+Una vez creada esta configuraci[on se debe agregar al secret `api-extractor-config/prod/extractor-secrets` lo valores que estan en el modulo de `auth`, así:
+
+<img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/example-zoho-secrets.png'/>
