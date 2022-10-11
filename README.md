@@ -363,3 +363,111 @@ La condición podría ser
 **Lo cual retornará `false` siempre que aun falten paginas por recorrer, el cual es el objetivo de este expression, retornar `true` cuando hay mas paginas por recorrer y `false` cuando ya no hay mas**
 
 
+## Esquema de la data
+
+Este campo es el `data_schema`, si no se especifica va a tomar toda la data tal cual como viene del api y la va a guardar en el archivo .csv, pero si queremos darle un formato especifico a la data y seleccionar solo ciertos campos podemos usar este esquema para eso, de la siguiente manera:
+
+El esquema es un json en el cual especificas los campos a guardar en el .csv, el nombre del key en cada json corresponde al key en la data del endpoint, y el nombre del value es el nombre de la columna que tendrá en el .csv, por ejemplo:
+
+Si el response del endpoint es:
+
+``` json
+{
+	"result": [
+		{
+			"name": "Cristian",
+			"age": 26,
+			"acount": 11111,
+			"city": "Montería"
+		},
+		{
+			"name": "Jose",
+			"age": 23,
+			"acount": 2222,
+			"city": "Bogotá"
+		}
+	]
+}
+```
+
+Y queremos guardar solo el `name` y el `account`, podemos crear un `data_schema` así:
+
+``` json
+{
+	"name": "user_name", 
+	"account": "user_account",
+	"city": "city"
+}
+```
+
+Esto dará como resultado el siguiente .csv
+
+
+| user_name         | user_account  | city          |
+|-------------------|---------------|---------------|
+| Cristian   	    | 11111         | Montería      |
+| Juan              | 2222          | Bogotá        |
+
+
+### Subelementos
+
+Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la siguiente.
+
+**Data:**
+``` json
+[
+	{
+		"type": "A",
+		"user": {
+			"name": "Cristian",
+			"account": {
+				"number": 3344
+			}
+		}
+	},
+	{
+		"type": "B",
+		"user": {
+			"name": "Juan",
+			"account": {
+				"number": 5555
+			}
+		}
+	}
+]
+```
+**Esquema:**
+``` json
+{
+	"type": "type",
+	"user": {
+		"name": "user_name",
+		"account": {
+			"number": "user_acc_number"
+		}
+	}
+}
+```
+
+**Resultado:**
+
+| type       | user_name         | user_acc_number   |
+|------------|-------------------|-------------------|
+|  A         | Cristian          | 3344   	         |
+|  B         | Juan              | 5555              | 
+
+
+## Destino en S3
+
+Es la ruta en donde guardará el archivo .csv con el resultado de la extracción, en la configuración es `s3_destiny` y se compone por un `bucket` y un `folder`
+
+``` json
+{
+	"bucket": "<string>",// default: api-extractor-output-prod
+	"folder": "<string>" // default: sin folder
+}
+```
+Si no se especifica el `s3_destinty` tomará los valores default
+
+
+
