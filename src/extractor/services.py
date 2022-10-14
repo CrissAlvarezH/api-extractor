@@ -171,7 +171,7 @@ class ApiService:
             file_path,
         ).put(Body=buffer.getvalue())
 
-        return f"s3://{extraction.s3_destiny.bucket}{file_path}"
+        return f"s3://{extraction.s3_destiny.bucket}/{file_path}"
 
     def run(self):
         LOG.info(f"start to execute api config: {self._config}")
