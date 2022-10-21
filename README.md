@@ -53,6 +53,19 @@ El despliegue se hace en una cuenta de [AWS](https://aws.amazon.com/), para eso 
 - Instalar [Serverless framework](https://www.serverless.com/framework/docs/getting-started) en la maquina local, el cual es el framework usado para desplegar el proyecto en los ambientes en aws.
 - `access key id` y `access secret key` de un usuario de [AWS IAM](https://aws.amazon.com/es/iam/) con permisos de administrador que será usado por `serverless framework` para crear la infraestructura vía linea de comandos.
 - Configurar los access key del usuario del paso anterior en la maquina local, esto se puede hacer usando el [CLI de aws](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) y corriendo el comando: `aws configure`
+- (Opcional o en caso de obtener un error) Configurar variables de entorno del proyecto, para esto copiamos y pegamosel archivo `.env.example` y lo renombramos a `.env`, esto lo podemos hacer a mano, o con el siguiente comando (dentro de la carpeta del proyecto):
+	```
+	cp .env.example .env
+	```
+	luego establecemos los valores como queramos, el primer valor es **EVENT_BRIDGE_SCHEDULE** el cual por defecto es `0 1 * * ? *` y es la expresión cron que indica la ejecución automatica de las extracciones.
+	
+	La segunda variable de entorno es **DEFAULT_OUTPUT_BUCKET_SUFFIX** que por defecto es `1` y es un texto que se pone al final del nombre del bucket por defecto donde se guarda el output de las extracciones, el cual es `api-extractor-output-prod` y al final del nombre se agregar este suffix.
+	Esto será necesario configurarlo porque el nombre de los bucket deben ser unicos y si el nombre actual ya esta ocupado entonces debemos añadir un sufijo para hacerlo unico, usando esta variable de entorno, el error que arroja el deploy que nos indica esto es el siguiente:
+	```
+	Error:
+	CREATE_FAILED: ExtractorOutputBucket (AWS::S3::Bucket)
+	api-extractor-output-prod-1 already exists
+	```
 
 - (Opcional) Si estamos en Linux o Mac podemos instalar Make usando
 
