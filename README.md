@@ -1,5 +1,6 @@
 
 
+
 # API Extractor
 Esta aplicación serverles permite consumir un api que sigue estandares REST y guardar la data en un archivo `.csv` en un bucket de [aws s3](https://aws.amazon.com/es/s3/) especificado en la configuración.
 
@@ -19,6 +20,7 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 
 - [Infraestructura](#infraestructura)
 - [Despliegue](#despliegue)
+	- [Destrucción de recursos](#destrucción-de-recursos)
 - [API](#api)
 	- [Colección de Postman](#colección-de-postman)
 	- [Api keys](#api-keys)
@@ -80,6 +82,17 @@ De todo esto lo que nos insteresa es el `HttpApiUrl` y el `RootApiKey` que nos s
 
 > **Nota:** una vez hecho el depliegue, por seguridad, borre el usuario que creó con permisos de administrador para propositos del despliegue
 
+### Destrucción de recursos
+En algunos casos será necesario destruir todos los recursos de aws que fueron creados en el deploy, para esto primero tenemos que limpiar el bucket creado para guardar el output de las extracciones `api-extractor-output-prod`, luego podemos proceder a destruir los recursos con el siguiente comando
+
+**Usando make:**
+``` 
+make remove
+```
+**Sin make:**
+```
+sls remove --stage prod
+```
 
 # API
 
