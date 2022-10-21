@@ -290,6 +290,7 @@ Cada extracción tiene la siguiente estructura
 	"name": "<string>",
 	"endpoint": <Endpoint>,
 	"data_key": <JsonField>,
+	"format": "csv | json", # formato a guardar en el destino
 	"pagination": {
 		"type": "sequential | link",
 		"parameters": <PaginationParameters>
@@ -391,7 +392,7 @@ La condición podría ser
 
 ## Esquema de la data
 
-Este campo es el `data_schema`, si no se especifica va a tomar toda la data tal cual como viene del api y la va a guardar en el archivo .csv, pero si queremos darle un formato especifico a la data y seleccionar solo ciertos campos podemos usar este esquema para eso, de la siguiente manera:
+Este campo es el `data_schema`, si no se especifica va a tomar toda la data tal cual como viene del api y la va a guardar en el archivo .csv o .json, pero si queremos darle un formato especifico a la data y seleccionar solo ciertos campos podemos usar este esquema para eso, de la siguiente manera:
 
 El esquema es un json en el cual especificas los campos a guardar en el .csv, el nombre del key en cada json corresponde al key en la data del endpoint, y el nombre del value es el nombre de la columna que tendrá en el .csv, por ejemplo:
 
@@ -629,6 +630,7 @@ La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/
 				"folder":  "zoho/deals/"
 			},
 			"data_key":  "data",
+			"format": "json",
 			"pagination":  {
 				"type":  "sequential",
 				"parameters":  {
