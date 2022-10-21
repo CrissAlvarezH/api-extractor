@@ -1,4 +1,5 @@
 import logging
+import json
 from datetime import datetime
 from typing import List, Optional
 from io import StringIO
@@ -159,17 +160,22 @@ class ApiService:
         df["ext__timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         return df
 
-    def send_to_s3(self, df, extraction: Extraction):
-        buffer = StringIO()
-        df.to_csv(buffer, index=False)
-        s3 = boto3.resource("s3")
+    def send_to_s3(self, data, extraction: Extraction):
+        if extraction.format == "csv":
+            buffer = StringIO()
+            data.to_csv(buffer, index=False)
+            file_body = buffer.getvalue()
+        elif extraction.format == "json":
+            file_body = bytes(json.dumps(data).encode("UTF-8"))
 
-        filename = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+        file_ext = "." + extraction.format
+        filename = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S") + file_ext
         file_path = extraction.s3_destiny.folder + filename
+        s3 = boto3.resource("s3")
         s3.Object(
             extraction.s3_destiny.bucket,
             file_path,
-        ).put(Body=buffer.getvalue())
+        ).put(Body=file_body)
 
         return f"s3://{extraction.s3_destiny.bucket}/{file_path}"
 
@@ -195,8 +201,10 @@ class ApiService:
                 data, last_item = EndpointExtractorService(extraction).run()
 
                 if len(data) > 0:
-                    df = self.convert_to_csv(data)
-                    s3_path = self.send_to_s3(df, extraction)
+                    if extraction.format == "csv":
+                        data = self.convert_to_csv(data)
+
+                    s3_path = self.send_to_s3(data, extraction)
                     LOG.info(f"successfully extraction {extraction} loaded on {s3_path}")
                 else:
                     LOG.warning(f"data is empty on extraction {extraction}")

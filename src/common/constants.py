@@ -12,4 +12,4 @@ API_EXTRACTOR_FUNCTION_NAME = f"api-extractor-{STAGE}-ApiExtractor"
 
 EXTRACTOR_EXECUTION_LOGS_TABLE_NAME = f"ApiExtractorExecutionLogs-{STAGE}"
 
-DESTINY_BUCKET_NAME = f"api-extractor-output-{STAGE}"
+DESTINY_BUCKET_NAME = f"api-extractor-output-{STAGE}-{os.getenv('DEFAULT_OUTPUT_BUCKET_SUFFIX')}"

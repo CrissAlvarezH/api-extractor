@@ -25,6 +25,7 @@ functions:
       - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pydantic:5
     environment:
       STAGE: ${opt:stage, 'dev'}
+      DEFAULT_OUTPUT_BUCKET_SUFFIX: ${env:DEFAULT_OUTPUT_BUCKET_SUFFIX, '1'}
     events:
       - httpApi:
           path: /config
@@ -69,6 +70,7 @@ functions:
       - arn:aws:lambda:us-east-2:770693421928:layer:Klayers-p38-pydantic:5
     environment:
       STAGE: ${opt:stage, 'dev'}
+      DEFAULT_OUTPUT_BUCKET_SUFFIX: ${env:DEFAULT_OUTPUT_BUCKET_SUFFIX, '1'}
     events:
       - eventBridge:
           enabled: true
@@ -138,7 +140,7 @@ resources:
     ExtractorOutputBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: api-extractor-output-${opt:stage, 'dev'}
+        BucketName: api-extractor-output-${opt:stage, 'dev'}-${env:DEFAULT_OUTPUT_BUCKET_SUFFIX, '1'}
        
     ApiConfigRol:
       Type: AWS::IAM::Role

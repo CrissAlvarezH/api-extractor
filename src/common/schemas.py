@@ -49,8 +49,16 @@ class Extraction(BaseModel):
     endpoint: Endpoint
     data_key: Optional[str]
     pagination: Pagination
+    format: Optional[str] = Field("csv")
     s3_destiny: S3Path = Field(S3Path())
     data_schema: Optional[dict]
+
+    @validator("format")
+    def validate_format(cls, v):
+        valid_formats = ["csv", "json"]
+        if v not in valid_formats:
+            raise ValueError(f"Invalid format, options: {valid_formats}")
+        return v
 
     def __str__(self) -> str:
         return f"{self.id}: {self.name}"
