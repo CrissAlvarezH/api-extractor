@@ -2,7 +2,7 @@
 
 
 # API Extractor
-Esta aplicación serverles permite consumir un api que sigue estandares REST y guardar la data en un archivo `.csv` en un bucket de [aws s3](https://aws.amazon.com/es/s3/) especificado en la configuración.
+Esta aplicación serverles permite consumir un api que sigue estandares REST y guardar la data en un archivo `.csv` o `.json`, según se configure, en un bucket de [aws s3](https://aws.amazon.com/es/s3/) especificado en la configuración.
 
 **Caracteristicas**
 
