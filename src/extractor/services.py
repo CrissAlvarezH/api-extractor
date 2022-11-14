@@ -183,6 +183,7 @@ class ApiService:
         LOG.info(f"start to execute api config: {self._config}")
         for extraction_config in self._config.extractions:
             data = []
+            data_length = 0
             last_item = None
             error = None
             s3_path = None
@@ -199,8 +200,9 @@ class ApiService:
                 extraction = Extraction(**filled_extraction_data)
 
                 data, last_item = EndpointExtractorService(extraction).run()
+                data_length = len(data)
 
-                if len(data) > 0:
+                if data_length > 0:
                     if extraction.format == "csv":
                         data = self.convert_to_csv(data)
 
@@ -217,7 +219,7 @@ class ApiService:
             insert_execution_log(
                 extraction=extraction_config,
                 config=self._config,
-                data_inserted_len=len(data) if data else 0,
+                data_inserted_len=data_length,
                 last=last_item,
                 destiny=s3_path,
                 error=error,
