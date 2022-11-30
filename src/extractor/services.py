@@ -81,7 +81,9 @@ class EndpointExtractorService:
     def apply_schema(self, data: List[dict]) -> List[dict]:
         def iterate_schema(schema, data, result):
             for key_schema, value_schema in schema.items():
-                if isinstance(value_schema, dict):
+                if data is None:
+                    result[value_schema] = None
+                elif isinstance(value_schema, dict):
                     iterate_schema(value_schema, data.get(key_schema), result)
                 else:
                     result[value_schema] = data.get(key_schema)  
