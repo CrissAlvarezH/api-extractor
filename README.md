@@ -630,7 +630,80 @@ La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/
 				"folder":  "zoho/deals/"
 			},
 			"data_key":  "data",
-			"format": "json",
+			"format": "csv",
+			"data_schema": {
+				"Owner": {
+					"name": "owner_name",
+					"id": "owner_id",
+					"email": "owner_email"
+				},
+				"Description": "description",
+				"$currency_symbol": "currency_symbol",
+				"$field_states": "field_states",
+				"$review_process": {
+					"approve": "review_process_approve",
+					"reject": "review_process_reject",
+					"resubmit": "review_process_resubmit"
+				},
+				"Duraci_n_del_contrato": "duracion_del_contrato",
+				"$followers": "followers",
+				"Numero_de_cotizaci_n": "numero_de_cotizacion",
+				"Closing_Date": "closing_date",
+				"Causas_de_perdida": "causas_de_perdida",
+				"Last_Activity_Time": "last_activity_time",
+				"Opex": "opex",
+				"Modified_By": {
+					"name": "modified_by_name",
+					"id": "modified_by_id",
+					"email": "modified_by_email"
+				},
+				"$review": "review",
+				"Lead_Conversion_Time": "lead_conversion_time",
+				"$state": "state",
+				"$process_flow": "process_flow",
+				"Deal_Name": "deal_name",
+				"Expected_Revenue": "expected_revenue",
+				"Overall_Sales_Duration": "overall_sales_duration",
+				"Stage": "stage",
+				"Account_Name": {
+					"name": "account_name_name",
+					"id": "account_name_id"
+				},
+				"id": "id",
+				"Preventa_2": "preventa_2",
+				"$approved": "approved",
+				"$approval": {
+					"delegate": "approval_delegate",
+					"approve": "approval_approve",
+					"reject": "approval_reject",
+					"resubmit": "approval_resubmit"
+				},
+				"Modified_Time": "modified_time",
+				"Created_Time": "created_time",
+				"Amount": "amount",
+				"$followed": "followed",
+				"Probability": "probability",
+				"$editable": "editable",
+				"$orchestration": "orchestration",
+				"Contact_Name": {
+					"name": "contact_name_name",
+					"id": "contact_name_id"
+				},
+				"Sales_Cycle_Duration": "sales_cycle_duration",
+				"Type": "type",
+				"$in_merge": "in_merge",
+				"Capex": "capex",
+				"Lead_Source": "lead_source",
+				"Servicio": "servicio",
+				"Created_By": {
+					"name": "created_by_name",
+					"id": "created_by_id",
+					"email": "created_by_email"
+				},
+				"Tag": "tag",
+				"$approval_state": "approval_state",
+				"$pathfinder": "pathfinder"
+			},
 			"pagination":  {
 				"type":  "sequential",
 				"parameters":  {
