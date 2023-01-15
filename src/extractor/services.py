@@ -171,7 +171,11 @@ class ApiService:
             file_body = bytes(json.dumps(data).encode("UTF-8"))
 
         file_ext = "." + extraction.format
-        filename = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S") + file_ext
+        filename = (
+            extraction.s3_destiny.filename
+            .format(timestamp=datetime.utcnow().strftime("%Y-%m-%d@%H-%M-%S")) 
+            + file_ext
+        )
         file_path = extraction.s3_destiny.folder + filename
         s3 = boto3.resource("s3")
         s3.Object(

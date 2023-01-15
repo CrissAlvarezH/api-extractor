@@ -41,6 +41,7 @@ class Pagination(BaseModel):
 class S3Path(BaseModel):
     bucket: Optional[str] = Field(DESTINY_BUCKET_NAME)
     folder: Optional[str] = Field("")
+    filename: Optional[str] = Field("{timestamp}")
 
 
 class Extraction(BaseModel):
