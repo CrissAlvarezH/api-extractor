@@ -11,6 +11,8 @@ package:
   patterns:
     - '!node_modules/**'
     - '!venv/**'
+    - '!.venv/**'
+    - '!fake-api/**'
     - '!docs/**'
     - '!.git/**'
 

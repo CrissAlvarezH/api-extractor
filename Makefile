@@ -11,3 +11,9 @@ deploy:
 
 remove:
 	sls remove --stage $(stage)
+
+fakeapi:
+	uvicorn fake-api.main:app --reload
+
+ngrok:
+	ngrok http 8000

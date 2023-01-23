@@ -44,11 +44,25 @@ class S3Path(BaseModel):
     filename: Optional[str] = Field("{timestamp}")
 
 
+class OutputParams(BaseModel):
+    csv_separator: Optional[str] = Field(",")
+
+
+class Transformation(BaseModel):
+    action: str
+    priority: Optional[int] = Field(0, gt=-1)
+    on: Optional[Union[List[str], str]] = Field("__all__")
+    params: Optional[dict]
+    new_column_prefix: Optional[str] = Field()
+
+
 class Extraction(BaseModel):
     id: Optional[str]
     name: str
     endpoint: Endpoint
     data_key: Optional[str]
+    transformations: Optional[List[Transformation]] = Field([])
+    output_params: Optional[OutputParams] = Field(OutputParams())
     pagination: Pagination
     format: Optional[str] = Field("csv")
     s3_destiny: S3Path = Field(S3Path())

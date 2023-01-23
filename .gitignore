@@ -18,9 +18,13 @@ var/
 *.egg
 node_modules
 .env
+.venv
 .DS_Store
 sandbox.py
 .vscode
+.pytest_cache
+.idea
+__pycache__
 
 # Serverless directories
 .serverless

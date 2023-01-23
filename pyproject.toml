@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "api-extractor"
+version = "0.1.0"
+description = ""
+authors = ["Cristian Alvarez H <alvarezhernandezcristian1@gmail.com>"]
+readme = "README.md"
+packages = [{include = "api_extractor"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[tool.poetry.group.dev.dependencies]
+moto = "^4.1.0"
+pytest = "^7.2.1"
+pandas = "^1.5.3"
+requests = "^2.28.2"
+boto = "^2.49.0"
+faker = "^16.6.0"
+starlette = "^0.23.1"
+uvicorn = "^0.20.0"
+pytest-dotenv = "^0.5.2"
+python-dotenv = "^0.21.1"
+pytest-env = "^0.8.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
