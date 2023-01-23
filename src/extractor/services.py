@@ -1,7 +1,6 @@
 import logging
-import json
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Union, Tuple
 from io import StringIO
 
 import pandas
@@ -12,7 +11,7 @@ from requests import request
 from src.common.repository import (
     get_last_item_from_last_time, insert_execution_log, update_access_token
 )
-from src.common.schemas import ApiAuth, ApiConfig, Extraction
+from src.common.schemas import ApiAuth, ApiConfig, Extraction, Transformation
 
 from .utils import extract_from_json, evaluate_expression, replace_decimal
 from .helpers import ReferenceHelper
@@ -106,7 +105,7 @@ class EndpointExtractorService:
             return data[1:]
         return data
 
-    def run(self) -> List[dict]:
+    def run(self) -> Tuple[List[dict], Union[dict, None]]:
         LOG.info(f'run extraction: {self._extraction}')
         data = []
 
@@ -134,7 +133,7 @@ class ApiService:
         self._config = config
         self._references = ReferenceHelper(config)
 
-    def refresh_token(self, auth_config: ApiAuth) -> str:
+    def refresh_token(self, auth_config: ApiAuth):
         # replace all references ${} to its raw value from auth_config
         auth = ApiAuth(**self._references.replace(auth_config.dict()))
 
@@ -157,18 +156,50 @@ class ApiService:
         self._config.auth = auth  # update reference to auth values
         update_access_token(self._config.id, access_token)
 
-    def convert_to_csv(self, data: dict):
+    def apply_transformations(self, transformations: List[Transformation], data: List[dict]) -> pandas.DataFrame:
+        transform_switcher = {
+            "replace": lambda series: series.str.replace(t.params["to_replace"], t.params["value"], regex=False),
+            "trim": lambda series: series.str.trim(),
+            "ltrim": lambda series: series.str.ltrim(),
+            "rtrim": lambda series: series.str.rtrim(),
+            "lower": lambda series: series.str.lower(),
+            "upper": lambda series: series.str.upper(),
+            "title": lambda series: series.str.title(),
+            "capitalize": lambda series: series.str.capitalize(),
+            "split": lambda series: series.str.split(t.params["char"]),
+            "join": lambda series: series.str.join(t.params["sep"]),
+            "slice": lambda series: series.str.slice(start=int(t.params["start"]), stop=int(t.params["stop"])),
+        }
+
         df = pandas.DataFrame(data)
+        transformations.sort(key=lambda x: x.priority)
+        for t in transformations:
+            transform = transform_switcher.get(t.action)
+            if not transform:
+                LOG.error(f"transform {t.action} does not exists")
+                continue
+
+            columns = list(df.columns) if t.on == "__all__" else t.on
+            for column in columns:
+                result = transform(df[column])
+                if t.new_column_prefix:
+                    column = t.new_column_prefix + column
+                df[column] = result
+
         df["ext__timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         return df
 
-    def send_to_s3(self, data, extraction: Extraction):
+    def send_to_s3(self, data: pandas.DataFrame, extraction: Extraction):
         if extraction.format == "csv":
             buffer = StringIO()
-            data.to_csv(buffer, index=False)
+            data.to_csv(buffer, index=False, sep=extraction.output_params.csv_separator)
             file_body = buffer.getvalue()
         elif extraction.format == "json":
-            file_body = bytes(json.dumps(data).encode("UTF-8"))
+            buffer = StringIO()
+            data.to_json(buffer)
+            file_body = bytes(buffer.getvalue().encode("UTF-8"))
+        else:
+            raise NotImplementedError(f"format {extraction.format} is not supported")
 
         file_ext = "." + extraction.format
         filename = (
@@ -188,7 +219,6 @@ class ApiService:
     def run(self):
         LOG.info(f"start to execute api config: {self._config}")
         for extraction_config in self._config.extractions:
-            data = []
             data_length = 0
             last_item = None
             error = None
@@ -209,8 +239,7 @@ class ApiService:
                 data_length = len(data)
 
                 if data_length > 0:
-                    if extraction.format == "csv":
-                        data = self.convert_to_csv(data)
+                    data = self.apply_transformations(extraction.transformations, data)
 
                     s3_path = self.send_to_s3(data, extraction)
                     LOG.info(f"successfully extraction {extraction} loaded on {s3_path}")

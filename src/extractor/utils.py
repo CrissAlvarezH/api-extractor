@@ -1,7 +1,5 @@
-from decimal import Decimal
-import json
 import logging
-from typing import List
+from typing import List, Union
 from src.common.aws import config_db_table
 
 from src.common.schemas import ApiConfig
@@ -11,7 +9,7 @@ LOG = logging.getLogger("utils")
 LOG.setLevel(logging.INFO)
 
 
-def get_configs(event) -> List[ApiConfig]:
+def get_configs(event) -> Union[List[ApiConfig], None]:
     """ Return configs to execute 
     
     return config that coming on event on extractor_config_api key
