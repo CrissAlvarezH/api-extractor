@@ -41,8 +41,10 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [PaginationParameters](#paginationparameters)
 		- [ConditionExpression](#conditionexpression)
 	- [Esquema de la data](#esquema-de-la-data)
+	- [Output params](#output-params)
 	- [Destino en S3](#destino-en-s3)
 - [Referencias a **secret**, **last** y **self**](#referencias)
+- [Testing](#testing)
 - [Ejemplos](#ejemplos)
 	- [Zoho](#zoho)
 
@@ -536,6 +538,22 @@ Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la sigui
 |  A         | Cristian          | 3344   	         |
 |  B         | Juan              | 5555              | 
 
+## Output params
+Estos parametros definen como se va a exportar el archivo final, se establecen en la extracción y los posibles valores son los siguientes
+``` json
+{
+	"extractions": [	
+		{
+			...
+			"output_params": {
+				"csv_separator": "<character>"
+			}
+		}
+	]
+}
+```
+**csv_separator** es el caracter con el cual se va a delimitar la data en el archivo de exportación en el caso que el `format` sera `csv`, el valor por defecto es `,`
+
 
 ## Destino en S3
 
@@ -639,6 +657,37 @@ La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `
 	}
 }
 ```
+
+# Testing
+Para ejecutar las pruebas primero que todo debes tener desplegado el proyecto, si no lo está lo podemos hacer con el comando
+```
+make deploy
+```
+Despues es necesario levantar un api creado especificamento con data dummy para hacer pruebas, para esto corremos el siguiente comando
+``` 
+make fakeapi
+```
+Esto levantará un servidor con un api rest creado en la carpeta `/fake-api` del proyecto.
+Luego, debemos exponer esta api a internet, para eso usamos [ngrok](https://ngrok.com/) (debemos tenerlo instalado y configurado) y lo hacemos con el siguiente comando
+```
+make ngrok
+```
+Con todo lo anterior debemos establecer las siguientes variables de entorno en el archivo `.env`
+```
+FAKE_API_SECRET_TO_GET_TOKEN=
+FAKE_API_TOKEN=
+CONFIG_API_BASE_URL=
+CONFIG_API_KEY=
+FAKE_API_DOMAIN=
+```
+Los valores para `FAKE_API_SECRET_TO_GET_TOKEN` y `FAKE_API_TOKEN` puede ser cualquier texto, pero las demas variables deben estar establecidas con los valores arrojados por el deploy y el levantamiento del fake api.
+
+Ya con lo anterior listo podemos lanzar las pruebas con [pytest](https://docs.pytest.org/) usando el comando
+```
+pytest
+```
+
+
 
 
 # Ejemplos
