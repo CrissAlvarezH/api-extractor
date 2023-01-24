@@ -34,6 +34,8 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [Logs de ejecución](#logs-de-ejecución)
 - [Extracciones](#extracciones)
 	- [Endpoint a extraer](#endpoint-a-extraer)
+	- [Transformaciones](#transformaciones)
+		- [Actions](#actions)
 	- [Paginación](#paginación)
 		- [PaginationParameters](#paginationparameters)
 		- [ConditionExpression](#conditionexpression)
@@ -322,6 +324,56 @@ Por ejemplo, si la respuesta del endpoint es
 }
 ```
 Entonces el `data_key` debería ser `result`
+
+## Transformaciones
+Las transformaciones permite aplicar funciones que modifiquen la data de las columnas despues de mapearlas por el `data_schema`, existen varios tipos de normalizaciones, a continuación se explica la estructura a definir:
+``` json
+{
+	"extractions": [
+		...
+		{
+			...
+			"transformations": [
+				...
+				{
+					"action": "<string>",
+					"priority": "<number>"
+					"on": [],
+					"new_column_prefix": "<string>",
+					"params": {}
+				}
+			]
+		}
+	]
+}
+```
+`action` es el nombre de la transformación, dependiendo de esta los `params` serán unos u otros, en la siguiente sección están todas las `action` disponibles y sus respectivos parametros.
+`priority` le indica al programa en que orden va a ejecutar las transformaciones, se ordenan de mayor a menos, por defecto es 0.
+`on` es una lista de nombres de columnas sobre las cuales se va a aplicar la transformación.
+`new_column_prefix` lo usamos cuando queremos que el resultado de la transformación no sobreescriba la columna sobre la cual se está aplicando, si no mas bien, que cree una nueva columna, y esta nueva columna usará este valor como prefijo en su nombre, si no se define este parametro entonces se sobreescribirá la columna con el resultado de la normalización.
+`params` son los parametros que recibe la normalización, los cuales cambian dependiendo de cual sea esta.
+
+### Actions
+A continuación se enumaran las actions disponibles para usar en las transformaciones, así como tambien sus respectivos params:
+
+-  **replace**
+	Es usado para remplazar unos caracteres por otros, los `params` de esta `action` son **to_replace** el cual el string que 	 se va a reemplazar por el parametro **value**
+- **trim**
+	Se utilia para borrar los espacios en blanco a la derecha e izquierda de los valores de la columna donde se aplique, si solo queremos borrar los espacios de la derecha, usamos en su lugar **rtrim**, o si es a la izquierda, entonces usamos **ltrim**
+- **lower**
+	Nos permite pasar a minusculas los valores
+- **upper**
+	Nos permite pasar a mayusculas los valores
+- **title**
+	Pone en mayusculas solo la primera letra de cada palabra
+- **capitalize**
+	Unicamente la primera letra de todo el texto será establecida en mayusculas
+- **split**
+	Divide el texto partiendolo por un determinado caracter, devolviendo así una lista de strings, para especificar el caracter por el cual se va a devidir el texto, usamor el `param` **char**
+- **join**
+Nos permite unir una lista convirtiendola en una cadena de texto, los elementos de la lista serán unidos usando un caracter el cual es parado por `params` como **sep**
+- **slice**
+Es usado para obtener un sub porción de un texto, para esto debemos especificar la posición desde la empieza y termina esta extracción, para eso usamos los `params` **start** y **stop** respectivamente.
 
 ## Paginación
 
