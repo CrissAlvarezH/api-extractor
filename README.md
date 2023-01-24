@@ -295,7 +295,9 @@ Cada extracción tiene la siguiente estructura
 	"name": "<string>",
 	"endpoint": <Endpoint>,
 	"data_key": <JsonField>,
-	"format": "csv | json", # formato a guardar en el destino
+	"format": "csv | json", # formato a guardar en el destino,
+	"output_params": {},
+	"transformations": [],
 	"pagination": {
 		"type": "sequential | link",
 		"parameters": <PaginationParameters>
