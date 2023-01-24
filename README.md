@@ -735,6 +735,19 @@ La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/
 			},
 			"data_key":  "data",
 			"format": "csv",
+			"transformations": [
+				{
+					"action": "replace",
+					"on": ["description"],
+					"params": {
+						"to_replace": ";",
+						"value": "."
+					}
+				}
+			],
+			"output_params": {
+				"csv_separator": ";"
+			},
 			"data_schema": {
 				"Owner": {
 					"name": "owner_name",
