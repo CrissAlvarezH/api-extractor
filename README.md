@@ -13,6 +13,7 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - Permite seleccionar los campos especificos que se desea extraer
 - Soporta paginación en las apis, ya sea por links o por paginas sequenciales
 - La data sensible como tokens, client ids, etc, se pueden guardar en [aws secrets](https://aws.amazon.com/es/secrets-manager/) y referencialos en la configuración del extractor
+- Permite aplicar transformaciones a la data
 - El extractor tiene api propia para hacer la configuración y ejecución del mismo
 - Etc.
 
