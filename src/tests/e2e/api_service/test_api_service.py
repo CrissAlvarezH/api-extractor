@@ -7,16 +7,8 @@ import pandas as pd
 import requests
 
 
-def test_config_base():
+def test_config_base(api_base_url, fake_api_domain, config_api_key, fake_api_secret):
     # NOTE: before this run a fake api with ngrok to expose to internet
-    api_base_url = os.environ.get("CONFIG_API_BASE_URL")
-    fake_api_domain = os.environ.get("FAKE_API_DOMAIN")
-    config_api_key = os.environ.get("CONFIG_API_KEY")
-    fake_api_secret = os.environ.get("FAKE_API_SECRET_TO_GET_TOKEN")
-    assert api_base_url
-    assert fake_api_domain
-    assert config_api_key
-    assert fake_api_secret
 
     data_file_path = os.path.join(os.path.dirname(__file__), "config_data.json")
     with open(data_file_path) as f:

@@ -1,7 +1,13 @@
 import json
 from typing import Optional
+from decimal import Decimal
 
-from src.common.constants import API_KEYS_SECRET_NAME, CONFIG_HISTORY_TABLE_NAME, CONFIG_TABLE_NAME
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 class Response:
@@ -16,7 +22,7 @@ class Response:
     def json(self) -> dict:
         return {
             "statusCode": self.status,
-            "body": json.dumps(self.body) if self.body else None,
+            "body": json.dumps(self.body, cls=DecimalEncoder) if self.body else None,
             "headers": {
                 "Content-Type": "application/json"
             }
