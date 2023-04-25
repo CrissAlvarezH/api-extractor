@@ -1,3 +1,4 @@
+from typing import Tuple, Optional
 import json
 import math
 import os
@@ -13,11 +14,11 @@ from starlette.routing import Route
 load_dotenv()
 
 
-def validate_auth_token(request: Request):
-    token = request.headers.get("Authorization", " ").split(" ")[1]
+def validate_auth_token(request: Request) -> Tuple[Optional[str], Optional[JSONResponse]]:
+    token = request.headers.get("Authorization", " ").split(" ")[1].strip()
     if token != os.environ.get("FAKE_API_TOKEN", ""):
-        return JSONResponse({"details": "Error token"})
-    return token
+        return None, JSONResponse({"details": "Error token"})
+    return token, None
 
 
 def load_data():
@@ -28,7 +29,9 @@ def load_data():
 
 
 async def data(request: Request):
-    validate_auth_token(request)
+    _, error_res = validate_auth_token(request)
+    if error_res:
+        return error_res
 
     data = load_data()
 
@@ -58,7 +61,11 @@ async def data(request: Request):
 
 
 async def data_without_pagination(request: Request):
-    validate_auth_token(request)
+    _, error_res = validate_auth_token(request)
+    if error_res:
+        return error_res
+
+    data = load_data()
 
     ordering = request.query_params.get("ordering")
     if ordering:
