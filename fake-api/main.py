@@ -28,7 +28,7 @@ def load_data():
     return data
 
 
-async def data(request: Request):
+async def payments(request: Request):
     _, error_res = validate_auth_token(request)
     if error_res:
         return error_res
@@ -60,7 +60,7 @@ async def data(request: Request):
     return JSONResponse(response)
 
 
-async def data_without_pagination(request: Request):
+async def payments_without_pagination(request: Request):
     _, error_res = validate_auth_token(request)
     if error_res:
         return error_res
@@ -90,6 +90,6 @@ def auth(request: Request):
 
 app = Starlette(debug=True, routes=[
     Route("/auth", auth, methods=["POST"]),
-    Route("/data", data),
-    Route("/data-without-pagination", data_without_pagination),
+    Route("/payments", payments),
+    Route("/payments-without-pagination", payments_without_pagination),
 ])
