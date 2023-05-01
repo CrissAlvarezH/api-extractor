@@ -13,7 +13,7 @@ remove:
 	sls remove --stage $(stage)
 
 fakeapi:
-	uvicorn fake-api.main:app --reload
+	uvicorn fake-api.main:app --reload --host 0.0.0.0
 
 ngrok:
 	ngrok http 8000
