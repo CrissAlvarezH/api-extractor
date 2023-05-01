@@ -403,6 +403,7 @@ Para una paginación de tipo `sequential` los parametros son:
 {
 	"param_name": "<string>",
 	"start_from": "<number>",
+	"step": "<number>",
 	"there_are_more_pages": <ConditionExpression | JsonField>,
 	"continue_while_status_code_is": "<number>",
 	"stop_when_response_body_is_empty": "<boolean>"
@@ -410,6 +411,7 @@ Para una paginación de tipo `sequential` los parametros son:
 ```
 - **param_name**:  expresa cual es el nombre del parametro que le indica al api el numero de la pagina, usualmente es `page`
 - **start_from**: indica desde cual pagina empezaremos
+- **step**: es el number de incremento de pagina en pagina
 - **there_are_more_pages**: es una expression condicional explicada mas adelante, o un field del json de la respuesta del api el cual es boolean e indica si hay mas paginas por recorrer
 - **continue_while_status_code_is**: es el codigo del response del endpoint que se esta consumientos que queremos que tenga para continuar la paginación, si responde con un codigo distinto se detiene.
 - **stop_when_response_body_is_empty**: cuando es **True** indica que, sin importar los otros parametros, va a detener la paginación si el response body es vacío
