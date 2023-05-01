@@ -32,7 +32,7 @@ def get_configs(event) -> Union[List[ApiConfig], None]:
     return configs
 
 
-def extract_from_json(data: dict, dot_syntax: str) -> str:
+def extract_from_json(data: dict, dot_syntax: str):
     """ Extract value from 'data' using 'dot_syntax' has json path 
     
     for instance:
@@ -40,13 +40,14 @@ def extract_from_json(data: dict, dot_syntax: str) -> str:
     'data' is {"user": {"account": {"number": "23455"}}}
     and return value must be "23455"
     """
-    temp = None
+    temp = data
     for key in dot_syntax.split("."):
-        if temp is None:
-            temp = data.get(key)
-            continue
+        if type(temp) is not dict:
+            """ return None because this value is not a dict and the 
+                dot_syntax is attempting to get a value if it were a dict"""
+            return None
 
-        if key not in temp.keys():
+        if key not in temp:
             return None
 
         temp = temp.get(key)

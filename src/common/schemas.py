@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 
 from src.common.constants import DESTINY_BUCKET_NAME
 
@@ -26,7 +26,23 @@ class ApiAuth(BaseModel):
 class SequentialPaginationParams(BaseModel):
     param_name: str
     start_from: Optional[str] = Field("1")
-    there_are_more_pages: str
+    step: str = "1"
+    there_are_more_pages: Optional[str]
+    continue_while_status_code_is: Optional[str]
+    stop_when_response_body_is_empty: Optional[bool] = False
+
+    @root_validator
+    def validate_continue_conditions_are_not_set_both(cls, values):
+        if (
+            values.get("there_are_more_pages") is not None
+            and values.get("continue_while_status_code_is") is not None
+        ):
+            raise ValueError(
+                "'there_are_more_pages' and 'continue_while_status_code_is' "
+                "cannot are settled both"
+            )
+
+        return values
 
 
 class LinkPaginationParams(BaseModel):
@@ -87,10 +103,10 @@ class ApiConfig(BaseModel):
 
     @validator("extractions")
     def validate_duplicated_extractor_ids(cls, v):
-        for extraction in v:
-            match = [e for e in v if e.id == extraction.id]
-            if len(match) == 2:
-                raise ValueError("There are two extraction with same id")
+        extraction_ids = [e.id for e in v if e.id is not None and len(e.id) > 0]
+        match = [_id for _id in extraction_ids if _id == extraction_ids]
+        if len(match) == 2:
+            raise ValueError("There are two extraction with same id")
         return v
 
     def __str__(self) -> str:

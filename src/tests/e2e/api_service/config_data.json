@@ -17,7 +17,7 @@
             {
                 "name":  "payments",
                 "endpoint":  {
-                    "url":  "{domain}/data",
+                    "url":  "{domain}/payments",
                     "headers":  {
                         "Authorization":  "Bearer ${self::auth.access_token}"
                     },
@@ -70,6 +70,67 @@
                         "param_name":  "page",
                         "start_from":  1,
                         "there_are_more_pages":  "pagination.more_records"
+                    }
+                }
+            },
+            {
+                "name":  "payments",
+                "endpoint":  {
+                    "url":  "{domain}/payments-without-pagination",
+                    "headers":  {
+                        "Authorization":  "Bearer ${self::auth.access_token}"
+                    },
+                    "query_params":  {
+                        "ordering":  "amount",
+                        "limit": 10
+                    }
+                },
+                "s3_destiny":  {
+                    "folder":  "payments-without-pagination/",
+                    "filename": "payments_{timestamp}"
+                },
+                "data_key":  "data",
+                "transformations": [
+                    {
+                        "action": "replace",
+                        "on": ["description"],
+                        "new_column_prefix": "transformed__",
+                        "params": {
+                            "to_replace": ".",
+                            "value": "~"
+                        }
+                    },
+                    {
+                        "action": "slice",
+                        "on": ["description"],
+                        "new_column_prefix": "sub_",
+                        "params": {
+                            "start": 2,
+                            "stop": 6
+                        }
+                    }
+                ],
+                "format": "csv",
+                "output_params": {
+                    "csv_separator": ";"
+                },
+                "data_schema": {
+                    "person": {
+                        "name": "person_name",
+                        "id": "person_id",
+                        "email": "person_email"
+                    },
+                    "description": "description",
+                    "currency": "currency",
+                    "amount": "amount"
+                },
+                "pagination":  {
+                    "type":  "sequential",
+                    "parameters":  {
+                        "param_name":  "from",
+                        "start_from":  1,
+                        "step": 10,
+                        "continue_while_status_code_is":  200
                     }
                 }
             }

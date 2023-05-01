@@ -56,7 +56,7 @@ class ReferenceHelper:
         return extract_from_json(self._config.dict(), ref)
 
     @classmethod
-    def destructure_reference(cls, ref: str) -> Tuple[str, str, str]:
+    def _destructure_reference(cls, ref: str) -> Tuple[str, str, str]:
         """ remove ${ and } from ref ex: ${self::auth, def} -> self::auth.token, def """
         inside = ref[2:-1]  
 
@@ -81,7 +81,7 @@ class ReferenceHelper:
         refs = pattern.findall(text)
 
         for ref in refs:
-            retrieve_from, ref_value, default = self.destructure_reference(ref)
+            retrieve_from, ref_value, default = self._destructure_reference(ref)
 
             if retrieve_from == "secret":
                 value = self._get_from_secret(ref_value)

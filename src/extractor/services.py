@@ -29,6 +29,7 @@ class EndpointExtractorService:
 
     def paginate(self):
         page = int(self._extraction.pagination.parameters.start_from)
+        step = int(self._extraction.pagination.parameters.step)
         url = self._extraction.endpoint.url
         continue_to_next = True
         while continue_to_next:
@@ -49,26 +50,49 @@ class EndpointExtractorService:
                     f"extraction {self._extraction.id} return status "
                     f"code: {resp.status_code}, body: {resp.text}")
             
-            response_body = resp.json()
-
-            if self._extraction.data_key:
-                data = response_body.get(self._extraction.data_key)
+            if len(resp.text.strip()) == 0:
+                data = []
             else:
-                data = response_body
+                response_body = resp.json()
+
+                if self._extraction.data_key:
+                    data = response_body.get(self._extraction.data_key)
+                else:
+                    data = response_body
 
             if data is None:
                 data = []
             elif isinstance(data, dict):
                 data = [data] # covert to list before append to all_data
+            
+            LOG.info(f"extract {len(data)} items, from: {url}, query: {query_params}")
+            if len(data) == 0:
+                LOG.warning(f"Endpoint return empty data: {resp.text}")
 
             yield data
 
             if self._extraction.pagination.type == "sequential":
-                page += 1
-                continue_to_next = evaluate_expression(
-                    data=response_body,
-                    expression=self._extraction.pagination.parameters.there_are_more_pages
-                ) 
+                page += step
+                if (
+                    len(resp.text.strip()) == 0
+                    and self._extraction.pagination.parameters.stop_when_response_body_is_empty
+                ):
+                    continue_to_next = False
+                    LOG.info("stop because response is empty")
+                elif self._extraction.pagination.parameters.there_are_more_pages:
+                    continue_to_next = evaluate_expression(
+                        data=response_body,
+                        expression=self._extraction.pagination.parameters.there_are_more_pages
+                    ) 
+                elif self._extraction.pagination.parameters.continue_while_status_code_is:
+                    expected_status = (
+                        self._extraction.pagination
+                        .parameters
+                        .continue_while_status_code_is
+                    )
+
+                    continue_to_next = str(resp.status_code) == str(expected_status)
+                    LOG.info(f"Pagination res: {continue_to_next}, status code: {resp.status_code}")
 
             elif self._extraction.pagination.type == "link":
                 url = extract_from_json(

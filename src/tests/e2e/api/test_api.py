@@ -17,7 +17,7 @@ def test_create_list_retrieve_and_delete_config(
     response = requests.post(f"{api_base_url}/config", json=config, headers=auth_header)
     created_config = response.json()
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
     assert created_config.get("name") == config.get('name')
     assert created_config.get("id")
 

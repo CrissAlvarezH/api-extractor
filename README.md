@@ -19,16 +19,18 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 
 ## Documentación
 
+- [API Extractor](#api-extractor)
+	- [Documentación](#documentación)
 - [Infraestructura](#infraestructura)
 - [Despliegue](#despliegue)
-	- [Destrucción de recursos](#destrucción-de-recursos)
+		- [Destrucción de recursos](#destrucción-de-recursos)
 - [API](#api)
 	- [Colección de Postman](#colección-de-postman)
 	- [Api keys](#api-keys)
 - [Configuración para el api extractor](#configuración-para-el-api-extractor)
 	- [Estructura general](#estructura-general)
-		- [Endpoint](#endpoint)
-		- [JsonField](#jsonfield)
+	- [Endpoint](#endpoint)
+	- [JsonField](#jsonfield)
 	- [Autenticación por tokens](#autenticación-por-tokens)
 		- [Refresco de token automatico](#refresco-de-token-automatico)
 	- [Ejecutar una configuración](#ejecutar-una-configuración)
@@ -39,11 +41,12 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 		- [Actions](#actions)
 	- [Paginación](#paginación)
 		- [PaginationParameters](#paginationparameters)
-		- [ConditionExpression](#conditionexpression)
+			- [ConditionExpression](#conditionexpression)
 	- [Esquema de la data](#esquema-de-la-data)
+		- [Subelementos](#subelementos)
 	- [Output params](#output-params)
 	- [Destino en S3](#destino-en-s3)
-- [Referencias a **secret**, **last** y **self**](#referencias)
+- [Referencias](#referencias)
 - [Testing](#testing)
 - [Ejemplos](#ejemplos)
 	- [Zoho](#zoho)
@@ -665,6 +668,10 @@ Para ejecutar las pruebas primero que todo debes tener desplegado el proyecto, s
 ```
 make deploy
 ```
+En aws secret manager, en los secretos del proyecto debe estar `base_secret` con el mismo valor que tiene la variable de entorno `FAKE_API_SECRET_TO_GET_TOKEN` en el .env
+
+> **IMPORTANTE:** La base de datos DynamoDB no debe tener registros que puedan interferir con las pruebas
+
 Despues es necesario levantar un api creado especificamento con data dummy para hacer pruebas, para esto corremos el siguiente comando
 ``` 
 make fakeapi
