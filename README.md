@@ -886,8 +886,7 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 }
             },
             "s3_destiny": {
-                "folder": "payments-without-pagination/",
-                "filename": "payments_{timestamp}"
+                "folder": "zoho/tickets/"
             },
             "data_key": "data",
             "transformations": [
