@@ -49,7 +49,8 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - [Referencias](#referencias)
 - [Testing](#testing)
 - [Ejemplos](#ejemplos)
-	- [Zoho](#zoho)
+	- [Zoho Deals](#zoho-deals)
+	- [Zoho Tickets](#zoho-tickets)
 
 # Infraestructura 
 <img src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/aws-arch-diagram.png'/>
@@ -402,12 +403,18 @@ Para una paginación de tipo `sequential` los parametros son:
 {
 	"param_name": "<string>",
 	"start_from": "<number>",
-	"there_are_more_pages": <ConditionExpression | JsonField>
+	"there_are_more_pages": <ConditionExpression | JsonField>,
+	"continue_while_status_code_is": "<number>",
+	"stop_when_response_body_is_empty": "<boolean>"
 }
 ```
 - **param_name**:  expresa cual es el nombre del parametro que le indica al api el numero de la pagina, usualmente es `page`
 - **start_from**: indica desde cual pagina empezaremos
 - **there_are_more_pages**: es una expression condicional explicada mas adelante, o un field del json de la respuesta del api el cual es boolean e indica si hay mas paginas por recorrer
+- **continue_while_status_code_is**: es el codigo del response del endpoint que se esta consumientos que queremos que tenga para continuar la paginación, si responde con un codigo distinto se detiene.
+- **stop_when_response_body_is_empty**: cuando es **True** indica que, sin importar los otros parametros, va a detener la paginación si el response body es vacío
+
+> **IMPORTANTE**: Los parametros `continue_while_status_code_is` y `stop_when_response_body_is_empty` no pueden estar configurados los dos, debe elegir uno de los dos para configurar la paginación.
 
 
 Cuando es de tipo `link` los parametros son
@@ -701,9 +708,9 @@ pytest
 
 # Ejemplos
 
-## Zoho
+## Zoho Deals
 
-La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/api/v3/get-records.html) es la siguiente:
+La configuración para el [api de zoho deals](https://www.zoho.com/crm/developer/docs/api/v3/get-records.html) es la siguiente:
 
 ``` json
 {
@@ -841,6 +848,117 @@ La configuración para el [api de zoho](https://www.zoho.com/crm/developer/docs/
 }
 ```
 
-Una vez creada esta configuracioón se debe agregar al secret `api-extractor-config/prod/extractor-secrets` lo valores que estan en la parte de `auth`, así:
+## Zoho Tickets
+
+La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocument#Tickets) es la siguiente:
+
+``` json
+{
+    "name": "Zoho Tickets",
+    "auth": {
+        "refresh_token": {
+            "endpoint": {
+                "url": "https://accounts.zoho.com/oauth/v2/token",
+                "query_params": {
+                    "refresh_token": "${secret::zoho_tickets_refresh_token}",
+                    "client_id": "${secret::zoho_tickets_client_id}",
+                    "client_secret": "${secret::zoho_tickets_client_secret}",
+                    "grant_type": "refresh_token"
+                }
+            },
+            "response_token_key": "access_token"
+        },
+        "access_token": ""
+    },
+    "extractions": [
+        {
+            "name": "tickets",
+            "endpoint": {
+                "url": "https://desk.zoho.com/api/v1/tickets",
+                "headers": {
+                    "Authorization": "Zoho-oauthtoken ${self::auth.access_token}"
+                },
+                "query_params": {
+                    "sortBy": "ticketNumber",
+                    "limit": 10
+                }
+            },
+            "s3_destiny": {
+                "folder": "payments-without-pagination/",
+                "filename": "payments_{timestamp}"
+            },
+            "data_key": "data",
+            "transformations": [
+                {
+                    "action": "replace",
+                    "on": [
+                        "description"
+                    ],
+                    "params": {
+                        "to_replace": ";",
+                        "value": "."
+                    }
+                }
+            ],
+            "format": "csv",
+            "output_params": {
+                "csv_separator": ";"
+            },
+            "data_schema": {
+                "id": "id",
+                "ticketNumber": "ticket_number",
+                "layoutId": "layout_id",
+                "email": "email",
+                "phone": "phone",
+                "subject": "subject",
+                "status": "statu",
+                "statusType": "status_type",
+                "createdTime": "created_time",
+                "category": "category",
+                "language": "lenguaje",
+                "subCategory": "sub_category",
+                "priority": "priority",
+                "channel": "channel",
+                "dueDate": "due_date",
+                "responseDueDate": "response_due_date",
+                "commentCount": "comment_count",
+                "sentiment": "sentiment",
+                "threadCount": "thread_count",
+                "closedTime": "closed_time",
+                "onholdTime": "on_hold_time",
+                "departmentId": "department_id",
+                "contactId": "contact_id",
+                "productId": "product_id",
+                "assigneeId": "assignee_id",
+                "teamId": "team_id",
+                "channelCode": "channel_code",
+                "webUrl": "web_url",
+                "isSpam": "is_spam",
+                "lastThread": "last_thread",
+                "customerResponseTime": "customer_response_time",
+                "isArchived": "is_archived",
+                "source": {
+                    "appName": "source__name",
+                    "appPhotoURL": "source__app_photo_url",
+                    "permalink": "source__permalink",
+                    "type": "source__type",
+                    "extId": "source__ext_id"
+                }
+            },
+            "pagination": {
+                "type": "sequential",
+                "parameters": {
+                    "param_name": "from",
+                    "start_from": 1,
+                    "step": 100,
+                    "continue_while_status_code_is": 200
+                }
+            }
+        }
+    ]
+}
+```
+
+Una vez creada esta configuración se debe agregar al secret `api-extractor-config/prod/extractor-secrets` lo valores que estan en la parte de `auth`, así:
 
 <img width="800px" src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/example-zoho-secrets.png'/>
