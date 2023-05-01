@@ -78,7 +78,10 @@ async def payments_without_pagination(request: Request):
 
     page_data = data[index_from:offset]
 
-    return JSONResponse({"data": page_data})
+    if len(page_data) > 0:
+        return JSONResponse({"data": page_data})
+    else:
+        return JSONResponse("", status_code=204)
 
 
 def auth(request: Request):
