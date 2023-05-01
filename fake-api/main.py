@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.applications import Starlette
 from starlette.routing import Route
 
@@ -81,7 +81,7 @@ async def payments_without_pagination(request: Request):
     if len(page_data) > 0:
         return JSONResponse({"data": page_data})
     else:
-        return JSONResponse(None, status_code=204)
+        return Response(status_code=204)
 
 
 def auth(request: Request):
