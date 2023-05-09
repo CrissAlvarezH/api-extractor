@@ -882,25 +882,14 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 },
                 "query_params": {
                     "sortBy": "ticketNumber",
-                    "limit": 10
+                    "limit": 100
                 }
             },
             "s3_destiny": {
                 "folder": "zoho/tickets/"
             },
             "data_key": "data",
-            "transformations": [
-                {
-                    "action": "replace",
-                    "on": [
-                        "description"
-                    ],
-                    "params": {
-                        "to_replace": ";",
-                        "value": "."
-                    }
-                }
-            ],
+            "transformations": [],
             "format": "csv",
             "output_params": {
                 "csv_separator": ";"
