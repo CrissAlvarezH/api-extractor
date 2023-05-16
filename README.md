@@ -856,96 +856,73 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
 
 ``` json
 {
-    "name": "Zoho Tickets",
-    "auth": {
-        "refresh_token": {
-            "endpoint": {
-                "url": "https://accounts.zoho.com/oauth/v2/token",
-                "query_params": {
-                    "refresh_token": "${secret::zoho_tickets_refresh_token}",
-                    "client_id": "${secret::zoho_tickets_client_id}",
-                    "client_secret": "${secret::zoho_tickets_client_secret}",
-                    "grant_type": "refresh_token"
-                }
-            },
-            "response_token_key": "access_token"
-        },
-        "access_token": ""
+    "id": "id",
+    "ticketNumber": "ticket_number",
+    "layoutId": "layout_id",
+    "email": "email",
+    "phone": "phone",
+    "subject": "subject",
+    "status": "status",
+    "statusType": "status_type",
+    "createdTime": "created_time",
+    "category": "category",
+    "language": "language",
+    "subCategory": "sub_category",
+    "priority": "priority",
+    "channel": "channel",
+    "dueDate": "due_date",
+    "responseDueDate": "response_due_date",
+    "commentCount": "comment_count",
+    "sentiment": "sentiment",
+    "threadCount": "thread_count",
+    "closedTime": "closed_time",
+    "onholdTime": "onhold_time",
+    "departmentId": "department_id",
+    "contactId": "contact_id",
+    "productId": "product_id",
+    "assigneeId": "assignee_id",
+    "teamId": "team_id",
+    "department": {
+        "id": "department__id",
+        "name": "department__name"
     },
-    "extractions": [
-        {
-            "name": "tickets",
-            "endpoint": {
-                "url": "https://desk.zoho.com/api/v1/tickets",
-                "headers": {
-                    "Authorization": "Zoho-oauthtoken ${self::auth.access_token}"
-                },
-                "query_params": {
-                    "sortBy": "ticketNumber",
-                    "limit": 100
-                }
-            },
-            "s3_destiny": {
-                "folder": "zoho/tickets/"
-            },
-            "data_key": "data",
-            "transformations": [],
-            "format": "csv",
-            "output_params": {
-                "csv_separator": ";"
-            },
-            "data_schema": {
-                "id": "id",
-                "ticketNumber": "ticket_number",
-                "layoutId": "layout_id",
-                "email": "email",
-                "phone": "phone",
-                "subject": "subject",
-                "status": "statu",
-                "statusType": "status_type",
-                "createdTime": "created_time",
-                "category": "category",
-                "language": "lenguaje",
-                "subCategory": "sub_category",
-                "priority": "priority",
-                "channel": "channel",
-                "dueDate": "due_date",
-                "responseDueDate": "response_due_date",
-                "commentCount": "comment_count",
-                "sentiment": "sentiment",
-                "threadCount": "thread_count",
-                "closedTime": "closed_time",
-                "onholdTime": "on_hold_time",
-                "departmentId": "department_id",
-                "contactId": "contact_id",
-                "productId": "product_id",
-                "assigneeId": "assignee_id",
-                "teamId": "team_id",
-                "channelCode": "channel_code",
-                "webUrl": "web_url",
-                "isSpam": "is_spam",
-                "lastThread": "last_thread",
-                "customerResponseTime": "customer_response_time",
-                "isArchived": "is_archived",
-                "source": {
-                    "appName": "source__name",
-                    "appPhotoURL": "source__app_photo_url",
-                    "permalink": "source__permalink",
-                    "type": "source__type",
-                    "extId": "source__ext_id"
-                }
-            },
-            "pagination": {
-                "type": "sequential",
-                "parameters": {
-                    "param_name": "from",
-                    "start_from": 1,
-                    "step": 100,
-                    "continue_while_status_code_is": 200
-                }
-            }
-        }
-    ]
+    "contact": {
+        "firstName": "contact__first_name",
+        "lastName": "contact__last_name",
+        "email": "contact__email",
+        "mobile": "contact__mobile",
+        "phone": "contact__phone",
+        "type": "contact__type",
+        "account": {
+            "accountName": "contact__account__account_name",
+            "website": "contact__account__website",
+            "id": "contact__account__id"
+        },
+        "id": "contact__id"
+    },
+    "team": "team",
+    "assignee": {
+        "id": "assignee__id",
+        "email": "assignee__email",
+        "photoURL": "assignee__photo_url",
+        "firstName": "assignee__first_name",
+        "lastName": "assignee__last_name"
+    },
+    "product": "product",
+    "webUrl": "web_url",
+    "channelCode": "channel_code",
+    "isRead": "is_read",
+    "isSpam": "is_spam",
+    "source": {
+        "appName": "source__app_name",
+        "appPhotoURL": "source__app_photo_url",
+        "permalink": "source__permalink",
+        "type": "source__type",
+        "extId": "source__ext_id"
+    },
+    "lastThread": "last_thread",
+    "customerResponseTime": "customer_response_time",
+    "isArchived": "is_archived"
 }
 ```
 
