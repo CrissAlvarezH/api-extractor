@@ -882,6 +882,7 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 },
                 "query_params": {
                     "sortBy": "ticketNumber",
+					"include": "contacts,products,departments,team,isRead,assignee",
                     "limit": 100
                 }
             },
