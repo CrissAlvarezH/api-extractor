@@ -160,19 +160,19 @@ De los cuales los endpoints que nos sirven para crear, modificar y borrar una co
 
 ``` json
 {
-	"name":  "<string>",
-	"auth":  {
-		"refresh_token":  {
-			"endpoint":  <Endpoint>,
-			"response_token_key":  <JsonField>
-		},
-		"access_token":  "<string>"
-	},
-	"extractions":  [
-		{...},
-		{...},
-		{...}
-	]
+    "name": "<string>",
+    "auth": {
+        "refresh_token": {
+            "endpoint":  <Endpoint>,
+            "response_token_key":  <JsonField>
+        },
+        "access_token": "<string>"
+    },
+    "extractions": [
+        {...},
+        {...},
+        {...}
+    ]
 }
 ```
 
@@ -181,10 +181,10 @@ El endpoint es la representació, en la configuración del extractor, de un endp
 El unico campo obligatorio es la `url`, el resto son opcionales si no se necesitan.
 ``` json
 {
-	"url": "<string>",
-	"query_params": "<json>",
-	"headers": "<json>",
-	"body": "<json>"
+    "url": "<string>",
+    "query_params": "<json>",
+    "headers": "<json>",
+    "body": "<json>"
 }
 ```
 
@@ -198,13 +198,13 @@ Se usa para especificar un campo en un json, cada campo se separa por un punto, 
 
 ``` json
 {
-	"user": {
-		"name": "Cristian",
-		"account": {
-			"number": 2334,
-			"type": "credit"
-		}
-	}
+    "user": {
+        "name": "Cristian",
+        "account": {
+            "number": 2334,
+            "type": "credit"
+        }
+    }
 }
 ```
 
@@ -232,25 +232,25 @@ Y este responde con:
 
 ``` json
 {
-	"mytoken":  "fa146b8e6a67366fd991c7d65",
-	"api_domain":  "https://www.api.com",
-	"token_type":  "Bearer",
-	"expires_in":  3600
+    "mytoken": "fa146b8e6a67366fd991c7d65",
+    "api_domain": "https://www.api.com",
+    "token_type": "Bearer",
+    "expires_in": 3600
 }
 ```
 Para este caso la configuración deberá ser la siguiente
 
 ``` json
 {
-	"auth": {
-		"endpoint": {
-			"url": "https://accounts.com/oauth/v2/",
-			"query_params": {
-				"refresh_token": "afe21e5ac3f9ea12639"
-			}
-		},
-		"response_token_key": "mytoken"
-	}
+    "auth": {
+        "endpoint": {
+            "url": "https://accounts.com/oauth/v2/",
+            "query_params": {
+                "refresh_token": "afe21e5ac3f9ea12639"
+            }
+        },
+        "response_token_key": "mytoken"
+    }
 }
 ```
 
@@ -276,16 +276,16 @@ Los logs tienen la siguiente estructura:
 
 ``` json
 {
-	"extraction_name": "",
-	"extraction_id": "",
-	"config_name": "",
-	"config_id": "",
-	"success": "true | false",
-	"error": "null | error_message", // error en caso de ocurrir
-	"data_inserted_len": "number", // cantidad de data extraida
-	"destiny": "", // ruta en s3 del archivo .csv
-	"last": "<json>", // ultimo item extraido la
-	"created_at": "", // fecha de inserción del log
+    "extraction_name": "",
+    "extraction_id": "",
+    "config_name": "",
+    "config_id": "",
+    "success": "true | false",
+    "error": "null | error_message", // error en caso de ocurrir
+    "data_inserted_len": "number", // cantidad de data extraida
+    "destiny": "", // ruta en s3 del archivo .csv
+    "last": "<json>", // ultimo item extraido la
+    "created_at": "", // fecha de inserción del log
 }
 ```
 
@@ -296,21 +296,21 @@ Cada extracción tiene la siguiente estructura
 
 ``` json
 {
-	"name": "<string>",
-	"endpoint": <Endpoint>,
-	"data_key": <JsonField>,
-	"format": "csv | json", # formato a guardar en el destino,
-	"output_params": {},
-	"transformations": [],
-	"pagination": {
-		"type": "sequential | link",
-		"parameters": <PaginationParameters>
-	},
-	"data_schema": "<json>",
-	"s3_destiny": {
-		"bucket": "<string>",
-		"folder": "<string>"
-	}
+    "name": "<string>",
+    "endpoint": <Endpoint>,
+    "data_key": <JsonField>,
+    "format": "csv | json", # formato a guardar en el destino,
+    "output_params": {},
+    "transformations": [],
+    "pagination": {
+        "type": "sequential | link",
+        "parameters": <PaginationParameters>
+    },
+    "data_schema": "<json>",
+    "s3_destiny": {
+        "bucket": "<string>",
+        "folder": "<string>"
+    }
 }
 ```
 ## Endpoint a extraer
@@ -322,14 +322,14 @@ Por ejemplo, si la respuesta del endpoint es
 
 ``` json
 {
-	"result": [
-		...
-	],
-	"pagination": {
-		"current_page": 1,
-		"total_page": 3,
-		"on_page": 50
-	}
+    "result": [
+        ...,
+    ],
+    "pagination": {
+        "current_page": 1,
+        "total_page": 3,
+        "on_page": 50
+    }
 }
 ```
 Entonces el `data_key` debería ser `result`
@@ -338,22 +338,22 @@ Entonces el `data_key` debería ser `result`
 Las transformaciones permite aplicar funciones que modifiquen la data de las columnas despues de mapearlas por el `data_schema`, existen varios tipos de normalizaciones, a continuación se explica la estructura a definir:
 ``` json
 {
-	"extractions": [
-		...
-		{
-			...
-			"transformations": [
-				...
-				{
-					"action": "<string>",
-					"priority": "<number>"
-					"on": [],
-					"new_column_prefix": "<string>",
-					"params": {}
-				}
-			]
-		}
-	]
+    "extractions": [
+        ...,
+        {
+            ...,
+            "transformations": [
+                ...,
+                {
+                    "action": "<string>",
+                    "priority": "<number>",
+                    "on": [],
+                    "new_column_prefix": "<string>",
+                    "params": {}
+                }
+            ]
+        }
+    ]
 }
 ```
 `action` es el nombre de la transformación, dependiendo de esta los `params` serán unos u otros, en la siguiente sección están todas las `action` disponibles y sus respectivos parametros.
@@ -401,12 +401,12 @@ Dependiendo del tipo de paginación los parametros son distintos.
 Para una paginación de tipo `sequential` los parametros son:
 ``` json
 {
-	"param_name": "<string>",
-	"start_from": "<number>",
-	"step": "<number>",
-	"there_are_more_pages": <ConditionExpression | JsonField>,
-	"continue_while_status_code_is": "<number>",
-	"stop_when_response_body_is_empty": "<boolean>"
+    "param_name": "<string>",
+    "start_from": "<number>",
+    "step": "<number>",
+    "there_are_more_pages": <ConditionExpression | JsonField>,
+    "continue_while_status_code_is": "<number>",
+    "stop_when_response_body_is_empty": "<boolean>"
 }
 ```
 - **param_name**:  expresa cual es el nombre del parametro que le indica al api el numero de la pagina, usualmente es `page`
@@ -423,7 +423,7 @@ Cuando es de tipo `link` los parametros son
 
 ``` json
 {
-	"next_link": <JsonField>
+    "next_link": <JsonField>
 }
 ```
 Este `next_link` hace referencia al link de la proxima pagina, el cual viene en el json del body, por tanto se debe especificar como accederlo, por ejemplo, un valor valido sería `pagination.next_link` para el caso de que el response tenga el link ubicado ahí.
@@ -442,13 +442,13 @@ Ejemplo:
 Para el response:
 ``` json
 {
-	"data": [
-		// ...
-	],
-	"info": {
-		"current_page": 2,
-		"total_pages": 10
-	}
+    "data": [
+        // ...
+    ],
+    "info": {
+        "current_page": 2,
+        "total_pages": 10
+    }
 }
 ```
 
@@ -469,20 +469,20 @@ Si el response del endpoint es:
 
 ``` json
 {
-	"result": [
-		{
-			"name": "Cristian",
-			"age": 26,
-			"acount": 11111,
-			"city": "Montería"
-		},
-		{
-			"name": "Jose",
-			"age": 23,
-			"acount": 2222,
-			"city": "Bogotá"
-		}
-	]
+    "result": [
+        {
+            "name": "Cristian",
+            "age": 26,
+            "acount": 11111,
+            "city": "Montería"
+        },
+        {
+            "name": "Jose",
+            "age": 23,
+            "acount": 2222,
+            "city": "Bogotá"
+        }
+    ]
 }
 ```
 
@@ -490,9 +490,9 @@ Y queremos guardar solo el `name`, `account` y `city`, podemos crear un `data_sc
 
 ``` json
 {
-	"name": "user_name", 
-	"account": "user_account",
-	"city": "city"
+    "name": "user_name",
+    "account": "user_account",
+    "city": "city"
 }
 ```
 
@@ -512,36 +512,36 @@ Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la sigui
 **Data:**
 ``` json
 [
-	{
-		"type": "A",
-		"user": {
-			"name": "Cristian",
-			"account": {
-				"number": 3344
-			}
-		}
-	},
-	{
-		"type": "B",
-		"user": {
-			"name": "Juan",
-			"account": {
-				"number": 5555
-			}
-		}
-	}
+    {
+        "type": "A",
+        "user": {
+            "name": "Cristian",
+            "account": {
+                "number": 3344
+            }
+        }
+    },
+    {
+        "type": "B",
+        "user": {
+            "name": "Juan",
+            "account": {
+                "number": 5555
+            }
+        }
+    }
 ]
 ```
 **Esquema:**
 ``` json
 {
-	"type": "type",
-	"user": {
-		"name": "user_name",
-		"account": {
-			"number": "user_acc_number"
-		}
-	}
+    "type": "type",
+    "user": {
+        "name": "user_name",
+        "account": {
+            "number": "user_acc_number"
+        }
+    }
 }
 ```
 
@@ -556,14 +556,14 @@ Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la sigui
 Estos parametros definen como se va a exportar el archivo final, se establecen en la extracción y los posibles valores son los siguientes
 ``` json
 {
-	"extractions": [	
-		{
-			...
-			"output_params": {
-				"csv_separator": "<character>"
-			}
-		}
-	]
+    "extractions": [
+        {
+            ...,
+            "output_params": {
+                "csv_separator": "<character>"
+            }
+        }
+    ]
 }
 ```
 **csv_separator** es el caracter con el cual se va a delimitar la data en el archivo de exportación en el caso que el `format` sera `csv`, el valor por defecto es `,`
@@ -575,8 +575,8 @@ Es la ruta en donde guardará el archivo .csv con el resultado de la extracción
 
 ``` json
 {
-	"bucket": "<string>",// default: api-extractor-output-prod
-	"folder": "<string>" // default: sin folder
+    "bucket": "<string>", // default: api-extractor-output-prod
+    "folder": "<string>" // default: sin folder
 }
 ```
 Si no se especifica el `s3_destinty` tomará los valores default
@@ -596,29 +596,29 @@ Este hace referencia al mismo json de configuración, es muy usado por ejemplo p
 
 ``` json
 {
-	"auth": {
-		"refresh_token": {
-			"endpoint": {
-				"url": "https://accounts.com/oauth/v2/",
-				"query_params": {
-					"refresh_token": "afe21e5ac3f9ea12639"
-				}
-			},
-			"response_token_key": "mytoken"
-		},
-		"access_token": ""
-	},
-	"extractions": [
-		{
-			...,
-			"endpoint": {
-				...,
-				"headers": {
-					"Authorization": "Bearer ${self::auth.access_token}"
-				}
-			}
-		}
-	]
+    "auth": {
+        "refresh_token": {
+            "endpoint": {
+                "url": "https://accounts.com/oauth/v2/",
+                "query_params": {
+                    "refresh_token": "afe21e5ac3f9ea12639"
+                }
+            },
+            "response_token_key": "mytoken"
+        },
+        "access_token": ""
+    },
+    "extractions": [
+        {
+            ...,
+            "endpoint": {
+                ...,
+                "headers": {
+                    "Authorization": "Bearer ${self::auth.access_token}"
+                }
+            }
+        }
+    ]
 }
 ```
 
@@ -630,18 +630,18 @@ Cada vez que se ejecuta una extracción se insertan [logs de la ejecución](#log
 
 ``` json
 {
-	...,
-	"extractions": [
-		{
-			...,
-			"endpoint": {
-				...,
-				"query_params": {
-					"start_from": "$(last::id, 1)"
-				}
-			}
-		}
-	]
+    ...,
+    "extractions": [
+        {
+            ...,
+            "endpoint": {
+                ...,
+                "query_params": {
+                    "start_from": "$(last::id, 1)"
+                }
+            }
+        }
+    ]
 }
 ```
 
@@ -654,21 +654,21 @@ La sintaxis es igual que el resto, y esta tiene especial uso para el modulo de `
 
 ``` json
 {
-	"auth": {
-		"refresh_token": {
-			"endpoint": {
-				"url": "https://accounts.com/oauth/v2/token",
-				"query_params": {
-					"refresh_token": "${secret::refresh_token}",
-					"client_id": "${secret::client_id}",
-					"client_secret": "${secret::client_secret}",
-					"grant_type": "refresh_token"
-				}
-			},
-			"response_token_key": "access_token"
-		},
-		"access_token": ""
-	}
+    "auth": {
+        "refresh_token": {
+            "endpoint": {
+                "url": "https://accounts.com/oauth/v2/token",
+                "query_params": {
+                    "refresh_token": "${secret::refresh_token}",
+                    "client_id": "${secret::client_id}",
+                    "client_secret": "${secret::client_secret}",
+                    "grant_type": "refresh_token"
+                }
+            },
+            "response_token_key": "access_token"
+        },
+        "access_token": ""
+    }
 }
 ```
 
@@ -716,137 +716,139 @@ La configuración para el [api de zoho deals](https://www.zoho.com/crm/developer
 
 ``` json
 {
-	"name":  "Zoho",
-	"auth":  {
-		"refresh_token":  {
-			"endpoint":  {
-				"url":  "https://accounts.zoho.com/oauth/v2/token",
-				"query_params":  {
-					"refresh_token":  "${secret::zoho_refresh_token}",
-					"client_id":  "${secret::zoho_client_id}",
-					"client_secret":  "${secret::zoho_client_secret}",
-					"grant_type":  "refresh_token"
-				}
-			},
-			"response_token_key":  "access_token"
-		},
-		"access_token":  ""
-	},
-	"extractions":  [
-		{
-			"name":  "deals",
-			"endpoint":  {
-				"url":  "https://www.zohoapis.com/crm/v2/deals",
-				"headers":  {
-					"Authorization":  "Bearer ${self::auth.access_token}",
-					"If-Modified-Since":  "${last::Modified_Time, 2020-09-03T17:40:53-05:00}"
-				},
-				"query_params":  {
-					"sort_by":  "Modified_Time",
-					"sort_order":  "asc"
-				}
-			},
-			"s3_destiny":  {
-				"folder":  "zoho/deals/"
-			},
-			"data_key":  "data",
-			"format": "csv",
-			"transformations": [
-				{
-					"action": "replace",
-					"on": ["description"],
-					"params": {
-						"to_replace": ";",
-						"value": "."
-					}
-				}
-			],
-			"output_params": {
-				"csv_separator": ";"
-			},
-			"data_schema": {
-				"Owner": {
-					"name": "owner_name",
-					"id": "owner_id",
-					"email": "owner_email"
-				},
-				"Description": "description",
-				"$currency_symbol": "currency_symbol",
-				"$field_states": "field_states",
-				"$review_process": {
-					"approve": "review_process_approve",
-					"reject": "review_process_reject",
-					"resubmit": "review_process_resubmit"
-				},
-				"Duraci_n_del_contrato": "duracion_del_contrato",
-				"$followers": "followers",
-				"Numero_de_cotizaci_n": "numero_de_cotizacion",
-				"Closing_Date": "closing_date",
-				"Causas_de_perdida": "causas_de_perdida",
-				"Last_Activity_Time": "last_activity_time",
-				"Opex": "opex",
-				"Modified_By": {
-					"name": "modified_by_name",
-					"id": "modified_by_id",
-					"email": "modified_by_email"
-				},
-				"$review": "review",
-				"Lead_Conversion_Time": "lead_conversion_time",
-				"$state": "state",
-				"$process_flow": "process_flow",
-				"Deal_Name": "deal_name",
-				"Expected_Revenue": "expected_revenue",
-				"Overall_Sales_Duration": "overall_sales_duration",
-				"Stage": "stage",
-				"Account_Name": {
-					"name": "account_name_name",
-					"id": "account_name_id"
-				},
-				"id": "id",
-				"Preventa_2": "preventa_2",
-				"$approved": "approved",
-				"$approval": {
-					"delegate": "approval_delegate",
-					"approve": "approval_approve",
-					"reject": "approval_reject",
-					"resubmit": "approval_resubmit"
-				},
-				"Modified_Time": "modified_time",
-				"Created_Time": "created_time",
-				"Amount": "amount",
-				"$followed": "followed",
-				"Probability": "probability",
-				"$editable": "editable",
-				"$orchestration": "orchestration",
-				"Contact_Name": {
-					"name": "contact_name_name",
-					"id": "contact_name_id"
-				},
-				"Sales_Cycle_Duration": "sales_cycle_duration",
-				"Type": "type",
-				"$in_merge": "in_merge",
-				"Capex": "capex",
-				"Lead_Source": "lead_source",
-				"Servicio": "servicio",
-				"Created_By": {
-					"name": "created_by_name",
-					"id": "created_by_id",
-					"email": "created_by_email"
-				},
-				"Tag": "tag",
-				"$approval_state": "approval_state",
-				"$pathfinder": "pathfinder"
-			},
-			"pagination":  {
-				"type":  "sequential",
-				"parameters":  {
-					"param_name":  "page",
-					"start_from":  1,
-					"there_are_more_pages":  "info.more_records"
-				}
-			}
-		}
-	]
+    "name": "Zoho",
+    "auth": {
+        "refresh_token": {
+            "endpoint": {
+                "url": "https://accounts.zoho.com/oauth/v2/token",
+                "query_params": {
+                    "refresh_token": "${secret::zoho_refresh_token}",
+                    "client_id": "${secret::zoho_client_id}",
+                    "client_secret": "${secret::zoho_client_secret}",
+                    "grant_type": "refresh_token"
+                }
+            },
+            "response_token_key": "access_token"
+        },
+        "access_token": ""
+    },
+    "extractions": [
+        {
+            "name": "deals",
+            "endpoint": {
+                "url": "https://www.zohoapis.com/crm/v2/deals",
+                "headers": {
+                    "Authorization": "Bearer ${self::auth.access_token}",
+                    "If-Modified-Since": "${last::Modified_Time, 2020-09-03T17:40:53-05:00}"
+                },
+                "query_params": {
+                    "sort_by": "Modified_Time",
+                    "sort_order": "asc"
+                }
+            },
+            "s3_destiny": {
+                "folder": "zoho/deals/"
+            },
+            "data_key": "data",
+            "format": "csv",
+            "transformations": [
+                {
+                    "action": "replace",
+                    "on": [
+                        "description"
+                    ],
+                    "params": {
+                        "to_replace": ";",
+                        "value": "."
+                    }
+                }
+            ],
+            "output_params": {
+                "csv_separator": ";"
+            },
+            "data_schema": {
+                "Owner": {
+                    "name": "owner_name",
+                    "id": "owner_id",
+                    "email": "owner_email"
+                },
+                "Description": "description",
+                "$currency_symbol": "currency_symbol",
+                "$field_states": "field_states",
+                "$review_process": {
+                    "approve": "review_process_approve",
+                    "reject": "review_process_reject",
+                    "resubmit": "review_process_resubmit"
+                },
+                "Duraci_n_del_contrato": "duracion_del_contrato",
+                "$followers": "followers",
+                "Numero_de_cotizaci_n": "numero_de_cotizacion",
+                "Closing_Date": "closing_date",
+                "Causas_de_perdida": "causas_de_perdida",
+                "Last_Activity_Time": "last_activity_time",
+                "Opex": "opex",
+                "Modified_By": {
+                    "name": "modified_by_name",
+                    "id": "modified_by_id",
+                    "email": "modified_by_email"
+                },
+                "$review": "review",
+                "Lead_Conversion_Time": "lead_conversion_time",
+                "$state": "state",
+                "$process_flow": "process_flow",
+                "Deal_Name": "deal_name",
+                "Expected_Revenue": "expected_revenue",
+                "Overall_Sales_Duration": "overall_sales_duration",
+                "Stage": "stage",
+                "Account_Name": {
+                    "name": "account_name_name",
+                    "id": "account_name_id"
+                },
+                "id": "id",
+                "Preventa_2": "preventa_2",
+                "$approved": "approved",
+                "$approval": {
+                    "delegate": "approval_delegate",
+                    "approve": "approval_approve",
+                    "reject": "approval_reject",
+                    "resubmit": "approval_resubmit"
+                },
+                "Modified_Time": "modified_time",
+                "Created_Time": "created_time",
+                "Amount": "amount",
+                "$followed": "followed",
+                "Probability": "probability",
+                "$editable": "editable",
+                "$orchestration": "orchestration",
+                "Contact_Name": {
+                    "name": "contact_name_name",
+                    "id": "contact_name_id"
+                },
+                "Sales_Cycle_Duration": "sales_cycle_duration",
+                "Type": "type",
+                "$in_merge": "in_merge",
+                "Capex": "capex",
+                "Lead_Source": "lead_source",
+                "Servicio": "servicio",
+                "Created_By": {
+                    "name": "created_by_name",
+                    "id": "created_by_id",
+                    "email": "created_by_email"
+                },
+                "Tag": "tag",
+                "$approval_state": "approval_state",
+                "$pathfinder": "pathfinder"
+            },
+            "pagination": {
+                "type": "sequential",
+                "parameters": {
+                    "param_name": "page",
+                    "start_from": 1,
+                    "there_are_more_pages": "info.more_records"
+                }
+            }
+        }
+    ]
 }
 ```
 
@@ -882,7 +884,7 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 },
                 "query_params": {
                     "sortBy": "ticketNumber",
-					"include": "contacts,products,departments,team,isRead,assignee",
+                    "include": "contacts,products,departments,team,isRead,assignee",
                     "limit": 100
                 }
             },
@@ -896,74 +898,74 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 "csv_separator": ";"
             },
             "data_schema": {
-				"id": "id",
-				"ticketNumber": "ticket_number",
-				"layoutId": "layout_id",
-				"email": "email",
-				"phone": "phone",
-				"subject": "subject",
-				"status": "status",
-				"statusType": "status_type",
-				"createdTime": "created_time",
-				"category": "category",
-				"language": "language",
-				"subCategory": "sub_category",
-				"priority": "priority",
-				"channel": "channel",
-				"dueDate": "due_date",
-				"responseDueDate": "response_due_date",
-				"commentCount": "comment_count",
-				"sentiment": "sentiment",
-				"threadCount": "thread_count",
-				"closedTime": "closed_time",
-				"onholdTime": "onhold_time",
-				"departmentId": "department_id",
-				"contactId": "contact_id",
-				"productId": "product_id",
-				"assigneeId": "assignee_id",
-				"teamId": "team_id",
-				"department": {
-					"id": "department__id",
-					"name": "department__name"
-				},
-				"contact": {
-					"firstName": "contact__first_name",
-					"lastName": "contact__last_name",
-					"email": "contact__email",
-					"mobile": "contact__mobile",
-					"phone": "contact__phone",
-					"type": "contact__type",
-					"account": {
-						"accountName": "contact__account__account_name",
-						"website": "contact__account__website",
-						"id": "contact__account__id"
-					},
-					"id": "contact__id"
-				},
-				"team": "team",
-				"assignee": {
-					"id": "assignee__id",
-					"email": "assignee__email",
-					"photoURL": "assignee__photo_url",
-					"firstName": "assignee__first_name",
-					"lastName": "assignee__last_name"
-				},
-				"product": "product",
-				"webUrl": "web_url",
-				"channelCode": "channel_code",
-				"isRead": "is_read",
-				"isSpam": "is_spam",
-				"source": {
-					"appName": "source__app_name",
-					"appPhotoURL": "source__app_photo_url",
-					"permalink": "source__permalink",
-					"type": "source__type",
-					"extId": "source__ext_id"
-				},
-				"lastThread": "last_thread",
-				"customerResponseTime": "customer_response_time",
-				"isArchived": "is_archived"
-			},
+                "id": "id",
+                "ticketNumber": "ticket_number",
+                "layoutId": "layout_id",
+                "email": "email",
+                "phone": "phone",
+                "subject": "subject",
+                "status": "status",
+                "statusType": "status_type",
+                "createdTime": "created_time",
+                "category": "category",
+                "language": "language",
+                "subCategory": "sub_category",
+                "priority": "priority",
+                "channel": "channel",
+                "dueDate": "due_date",
+                "responseDueDate": "response_due_date",
+                "commentCount": "comment_count",
+                "sentiment": "sentiment",
+                "threadCount": "thread_count",
+                "closedTime": "closed_time",
+                "onholdTime": "onhold_time",
+                "departmentId": "department_id",
+                "contactId": "contact_id",
+                "productId": "product_id",
+                "assigneeId": "assignee_id",
+                "teamId": "team_id",
+                "department": {
+                    "id": "department__id",
+                    "name": "department__name"
+                },
+                "contact": {
+                    "firstName": "contact__first_name",
+                    "lastName": "contact__last_name",
+                    "email": "contact__email",
+                    "mobile": "contact__mobile",
+                    "phone": "contact__phone",
+                    "type": "contact__type",
+                    "account": {
+                        "accountName": "contact__account__account_name",
+                        "website": "contact__account__website",
+                        "id": "contact__account__id"
+                    },
+                    "id": "contact__id"
+                },
+                "team": "team",
+                "assignee": {
+                    "id": "assignee__id",
+                    "email": "assignee__email",
+                    "photoURL": "assignee__photo_url",
+                    "firstName": "assignee__first_name",
+                    "lastName": "assignee__last_name"
+                },
+                "product": "product",
+                "webUrl": "web_url",
+                "channelCode": "channel_code",
+                "isRead": "is_read",
+                "isSpam": "is_spam",
+                "source": {
+                    "appName": "source__app_name",
+                    "appPhotoURL": "source__app_photo_url",
+                    "permalink": "source__permalink",
+                    "type": "source__type",
+                    "extId": "source__ext_id"
+                },
+                "lastThread": "last_thread",
+                "customerResponseTime": "customer_response_time",
+                "isArchived": "is_archived"
+            },
             "pagination": {
                 "type": "sequential",
                 "parameters": {
