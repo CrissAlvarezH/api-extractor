@@ -856,35 +856,21 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
 
 ``` json
 {
-    "id": "id",
-    "ticketNumber": "ticket_number",
-    "layoutId": "layout_id",
-    "email": "email",
-    "phone": "phone",
-    "subject": "subject",
-    "status": "status",
-    "statusType": "status_type",
-    "createdTime": "created_time",
-    "category": "category",
-    "language": "language",
-    "subCategory": "sub_category",
-    "priority": "priority",
-    "channel": "channel",
-    "dueDate": "due_date",
-    "responseDueDate": "response_due_date",
-    "commentCount": "comment_count",
-    "sentiment": "sentiment",
-    "threadCount": "thread_count",
-    "closedTime": "closed_time",
-    "onholdTime": "onhold_time",
-    "departmentId": "department_id",
-    "contactId": "contact_id",
-    "productId": "product_id",
-    "assigneeId": "assignee_id",
-    "teamId": "team_id",
-    "department": {
-        "id": "department__id",
-        "name": "department__name"
+    "name": "Zoho Tickets",
+    "auth": {
+        "refresh_token": {
+            "endpoint": {
+                "url": "https://accounts.zoho.com/oauth/v2/token",
+                "query_params": {
+                    "refresh_token": "${secret::zoho_tickets_refresh_token}",
+                    "client_id": "${secret::zoho_tickets_client_id}",
+                    "client_secret": "${secret::zoho_tickets_client_secret}",
+                    "grant_type": "refresh_token"
+                }
+            },
+            "response_token_key": "access_token"
+        },
+        "access_token": ""
     },
     "extractions": [
         {
