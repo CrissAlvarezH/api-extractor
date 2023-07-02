@@ -1,10 +1,11 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 import json
 import math
 import os
 
 from dotenv import load_dotenv
 
+from starlette import status
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.applications import Starlette
@@ -27,13 +28,20 @@ def load_data():
         data = json.loads(f.read())
     return data
 
+def map_data_to_list(data: List[dict]):
+    """ exclude retrieve data """
+    def mapper(item: dict) -> dict:
+        del item["retrieve_data"]
+        return item
+    return [mapper(i) for i in data]
+
 
 async def payments(request: Request):
     _, error_res = validate_auth_token(request)
     if error_res:
         return error_res
 
-    data = load_data()
+    data = map_data_to_list(load_data())
 
     ordering = request.query_params.get("ordering")
     if ordering:
@@ -65,7 +73,7 @@ async def payments_without_pagination(request: Request):
     if error_res:
         return error_res
 
-    data = load_data()
+    data = map_data_to_list(load_data())
 
     ordering = request.query_params.get("ordering")
     if ordering:
@@ -80,9 +88,23 @@ async def payments_without_pagination(request: Request):
 
     if len(page_data) > 0:
         return JSONResponse({"data": page_data})
-    else:
-        return Response(status_code=204)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+async def retrieve_payment(request: Request):
+    _, error_res = validate_auth_token(request)
+    if error_res:
+        return error_res
+
+    id = request.path_params.get("id")
+    data = load_data()
+
+    filtered = [i for i in data if i["id"] == id]
+
+    if len(filtered) == 0:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+    return JSONResponse(filtered[0])
+    
 
 def auth(request: Request):
     if request.query_params.get("secret") != os.environ.get("FAKE_API_SECRET_TO_GET_TOKEN"):
@@ -94,5 +116,6 @@ def auth(request: Request):
 app = Starlette(debug=True, routes=[
     Route("/auth", auth, methods=["POST"]),
     Route("/payments", payments),
+    Route("/payments/{id}", retrieve_payment),
     Route("/payments-without-pagination", payments_without_pagination),
 ])

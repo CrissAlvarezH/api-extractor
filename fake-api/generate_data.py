@@ -1,3 +1,4 @@
+import uuid
 import os.path
 import random
 import json
@@ -12,6 +13,7 @@ def generate_data(n: int):
     data_list = []
     for i in range(n):
         data = {
+            "id": uuid.uuid4().hex,
             "person": {
                 "id": i + 1,
                 "name": faker.name(),
@@ -19,7 +21,11 @@ def generate_data(n: int):
             },
             "description": faker.text(),
             "currency": random.choice(["COP", "USD", "EUR"]),
-            "amount": random.randint(1500, 9500)
+            "amount": random.randint(1500, 9500),
+            "retrieve_data": {
+                "last_amount": random.randint(1500, 9500),
+                "reputation": random.choice(["positive", "negative", "medium"])
+            }
         }
         data_list.append(data)
 
