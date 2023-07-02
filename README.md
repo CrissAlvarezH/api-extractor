@@ -889,7 +889,8 @@ La configuración para el [api de zoho tikets](https://desk.zoho.com/DeskAPIDocu
                 }
             },
             "s3_destiny": {
-                "folder": "zoho/tickets/"
+                "folder": "zoho/tickets/",
+		"filename": "ticketsdata"
             },
             "data_key": "data",
             "transformations": [],
