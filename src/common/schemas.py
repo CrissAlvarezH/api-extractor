@@ -72,6 +72,12 @@ class Transformation(BaseModel):
     new_column_prefix: Optional[str] = Field()
 
 
+class MappingFetch(BaseModel):
+    endpoint: Endpoint
+    prefix: Optional[str] = Field("details__")
+    data_schema: Optional[dict]
+
+
 class Extraction(BaseModel):
     id: Optional[str]
     name: str
@@ -83,6 +89,7 @@ class Extraction(BaseModel):
     format: Optional[str] = Field("csv")
     s3_destiny: S3Path = Field(S3Path())
     data_schema: Optional[dict]
+    mapping_fetch: Optional[MappingFetch] = Field(None)
 
     @validator("format")
     def validate_format(cls, v):

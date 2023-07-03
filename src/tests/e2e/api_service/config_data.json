@@ -133,6 +133,81 @@
                         "continue_while_status_code_is":  200
                     }
                 }
+            },
+            {
+                "name":  "payments_with_mapping_fetch",
+                "endpoint":  {
+                    "url":  "{domain}/payments",
+                    "headers":  {
+                        "Authorization":  "Bearer ${self::auth.access_token}"
+                    },
+                    "query_params":  {
+                        "ordering":  "amount"
+                    }
+                },
+                "s3_destiny":  {
+                    "folder":  "payments-with-mapping-fetch/",
+                    "filename": "payments_{timestamp}"
+                },
+                "data_key":  "result",
+                "transformations": [
+                    {
+                        "action": "replace",
+                        "on": ["description"],
+                        "new_column_prefix": "transformed__",
+                        "params": {
+                            "to_replace": ".",
+                            "value": "~"
+                        }
+                    },
+                    {
+                        "action": "slice",
+                        "on": ["description"],
+                        "new_column_prefix": "sub_",
+                        "params": {
+                            "start": 2,
+                            "stop": 6
+                        }
+                    }
+                ],
+                "format": "csv",
+                "output_params": {
+                    "csv_separator": ";"
+                },
+                "data_schema": {
+                    "id": "id",
+                    "person": {
+                        "name": "person_name",
+                        "id": "person_id",
+                        "email": "person_email"
+                    },
+                    "description": "description",
+                    "currency": "currency",
+                    "amount": "amount"
+                },
+                "mapping_fetch": {
+                    "endpoint": {
+                        "url": "{domain}/payments/${extracted_item::id}",
+                        "headers": {
+                            "Authorization": "Zoho-oauthtoken ${self::auth.access_token}"
+                        }
+                    },
+                    "prefix": "details__",
+                    "data_schema": {
+                        "retrieve_data": {
+                            "last_amount": "last_amount",
+                            "reputation": "reputation"
+                        }
+                    }
+                },
+                "pagination":  {
+                    "type":  "sequential",
+                    "parameters":  {
+                        "param_name":  "page",
+                        "start_from":  1,
+                        "there_are_more_pages":  "pagination.more_records"
+                    }
+                }
             }
         ]
     }

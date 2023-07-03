@@ -26,34 +26,6 @@ class ReferenceHelper:
 
     Default value is declared after a comma, like: ${last::name, default}
     """
-    _config: ApiConfig
-
-    def __init__(self, config: ApiConfig):
-        self._config = config
-
-    def _get_from_secret(self, ref: str) -> Union[str, None]:
-        _, secrets = extractor_secrets()
-        return secrets.get(ref)
-
-    def _get_from_last(self, ref: str, context: dict) -> Union[str, None]:
-        """ Retrieve from the last record fetched by this extraction"""
-        extraction_id = context.get("extraction_id")
-        last_log = get_last_execution_log(extraction_id)
-        if last_log is None:
-            return None
-
-        last = last_log.get("last", {})
-
-        if isinstance(last, str) and last == "null":
-            return None
-
-        try:
-            return last.get(ref) if last else None
-        except Exception as e:
-            raise ValueError(f"error to get last reference: {ref}")
-
-    def _get_from_self(self, ref: str) -> Union[str, None]:
-        return extract_from_json(self._config.dict(), ref)
 
     @classmethod
     def _destructure_reference(cls, ref: str) -> Tuple[str, str, str]:
@@ -73,22 +45,23 @@ class ReferenceHelper:
 
         return retrieve_from, ref_value, default
 
+    @classmethod
     def _retrieve_reference_value(
-        self, text: str, context: Optional[dict] = None
+        cls, text: str, context: Optional[dict] = None
     ) -> str:
         # Extract reference params with syntax ${from::value, default}
-        pattern = re.compile("(\${+[A-Za-z0-9 ,.;:/_-]+})")
+        pattern = re.compile("(\${+[A-Za-z0-9 ,.;:\/_-]+})")
         refs = pattern.findall(text)
 
         for ref in refs:
-            retrieve_from, ref_value, default = self._destructure_reference(ref)
+            retrieve_from, ref_value, default = cls._destructure_reference(ref)
 
-            if retrieve_from == "secret":
-                value = self._get_from_secret(ref_value)
-            elif retrieve_from == "self":
-                value = self._get_from_self(ref_value)
-            elif retrieve_from == "last":
-                value = self._get_from_last(ref_value, context)
+            # retrieve_from is searched in context
+            # if there isn't in the context, just do nothing with this reference
+            if context.get(retrieve_from) is not None:
+                value = extract_from_json(context[retrieve_from], ref_value)
+            else:
+                continue
             
             if value is None:
                 value = default
@@ -111,11 +84,12 @@ class ReferenceHelper:
 
         return text
 
-    def replace(self, json: dict, context: Optional[dict] = None) -> dict:
+    @classmethod
+    def replace(cls, json: dict, context: Optional[dict] = None) -> dict:
         """ replace all ${} references by its value in json """
         for key, value in json.items():
             if isinstance(value, dict):
-                self.replace(value, context)
+                cls.replace(value, context)
             elif isinstance(value, str):
-                json[key] = self._retrieve_reference_value(json[key], context)
+                json[key] = cls._retrieve_reference_value(json[key], context)
         return json

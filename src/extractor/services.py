@@ -1,3 +1,4 @@
+import re
 import logging
 from datetime import datetime
 from typing import List, Optional, Union, Tuple
@@ -9,9 +10,11 @@ import boto3
 from requests import request
 
 from src.common.repository import (
-    get_last_item_from_last_time, insert_execution_log, update_access_token
+    get_last_item_from_last_time, insert_execution_log, update_access_token, 
+    get_last_execution_log
 )
-from src.common.schemas import ApiAuth, ApiConfig, Extraction, Transformation
+from src.common.schemas import ApiAuth, ApiConfig, Extraction, Transformation, Endpoint
+from src.common.aws import extractor_secrets
 
 from .utils import extract_from_json, evaluate_expression, replace_decimal
 from .helpers import ReferenceHelper
@@ -101,20 +104,50 @@ class EndpointExtractorService:
                 )
                 continue_to_next = url is not None
 
-    def apply_schema(self, data: List[dict]) -> List[dict]:
+    def apply_mapping_fetch(self, data: List[dict]) -> List[dict]:
+        for item in data:
+            endpoint = self._extraction.mapping_fetch.endpoint
+            endpoint = Endpoint(**ReferenceHelper.replace(
+                endpoint.dict(), context={"extracted_item": item}))
+
+            resp = request(
+                endpoint.method or "get",
+                endpoint.url,
+                params=endpoint.query_params,
+                data=endpoint.body,
+                headers=endpoint.headers
+            )
+
+            if len(resp.text.strip()) == 0:
+                LOG.warning(f"mapping fetch: EMPTY RESPONSE, for: {item}")
+                continue
+            
+            result = self.apply_schema(
+                self._extraction.mapping_fetch.data_schema,
+                data=[resp.json()],
+                prefix=self._extraction.mapping_fetch.prefix
+            )[0]
+
+            # add data from endpoint to item
+            item.update(result)
+             
+        return data
+
+    @classmethod
+    def apply_schema(cls, data_schema: dict, data: List[dict], prefix: str = "") -> List[dict]:
         def iterate_schema(schema, data, result):
             for key_schema, value_schema in schema.items():
                 if data is None:
-                    result[value_schema] = None
+                    result[prefix + value_schema] = None
                 elif isinstance(value_schema, dict):
                     iterate_schema(value_schema, data.get(key_schema), result)
                 else:
-                    result[value_schema] = data.get(key_schema)  
+                    result[prefix + value_schema] = data.get(key_schema)  
 
         result = []
         for item in data:
             result_item = {}
-            iterate_schema(self._extraction.data_schema, item, result_item)
+            iterate_schema(data_schema, item, result_item)
             result.append(result_item)
 
         return result
@@ -144,22 +177,29 @@ class EndpointExtractorService:
         data = self.remove_first_if_last_is_equal(data, previous_last_item)
 
         if self._extraction.data_schema:
-            data = self.apply_schema(data)
+            data = self.apply_schema(self._extraction.data_schema, data)
+        
+        if self._extraction.mapping_fetch:
+            data = self.apply_mapping_fetch(data)
 
         return data, current_last_item
 
 
 class ApiService:
     _config: ApiConfig
-    _references: ReferenceHelper
+    _secrets: dict
 
     def __init__(self, config: ApiConfig):
         self._config = config
-        self._references = ReferenceHelper(config)
+        _, secrets = extractor_secrets()
+        self._secrets = secrets
 
     def refresh_token(self, auth_config: ApiAuth):
-        # replace all references ${} to its raw value from auth_config
-        auth = ApiAuth(**self._references.replace(auth_config.dict()))
+        filled_auth_refs = ReferenceHelper.replace(
+            auth_config.dict(),
+            context={"secret": self._secrets, "self": self._config.dict()}
+        )
+        auth = ApiAuth(**filled_auth_refs)
 
         resp = requests.post(
             auth.refresh_token.endpoint.url,
@@ -213,6 +253,23 @@ class ApiService:
         df["ext__timestamp"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")
         return df
 
+    def replace_extraction_references(self, extraction: Extraction) -> Extraction:
+        """ Replace references like ${secret::my_secret}, ${self::name}, etc"""
+
+        # get last log of extraction
+        last_log = get_last_execution_log(extraction.id)
+        last = last_log.get("last", {}) if last_log else None
+        
+        filled_extraction_data = ReferenceHelper.replace(
+            extraction.dict(), 
+            context={
+                "self": self._config.dict(),
+                "last": last,
+                "secret": self._secrets
+            }
+        )
+        return Extraction(**filled_extraction_data)
+
     def send_to_s3(self, data: pandas.DataFrame, extraction: Extraction):
         if extraction.format == "csv":
             buffer = StringIO()
@@ -252,12 +309,7 @@ class ApiService:
                 if self._config.auth.refresh_token:
                     self.refresh_token(self._config.auth)
 
-                # replace references on extraction
-                filled_extraction_data = self._references.replace(
-                    extraction_config.dict(), 
-                    context={"extraction_id": extraction_config.id}
-                )
-                extraction = Extraction(**filled_extraction_data)
+                extraction = self.replace_extraction_references(extraction_config)
 
                 data, last_item = EndpointExtractorService(extraction).run()
                 data_length = len(data)

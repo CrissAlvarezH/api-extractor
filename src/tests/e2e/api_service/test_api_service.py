@@ -15,10 +15,14 @@ def test_config_base(api_base_url, fake_api_domain, config_api_key, fake_api_sec
         config = json.loads(f.read())["config_base"]
 
     # set env var to domain of ngrok
-    config["auth"]["refresh_token"]["endpoint"]["url"] = config["auth"]["refresh_token"]["endpoint"]["url"] \
-        .format(domain=fake_api_domain)
+    config["auth"]["refresh_token"]["endpoint"]["url"] = (
+        config["auth"]["refresh_token"]["endpoint"]["url"] .format(domain=fake_api_domain)
+    )
     for extraction in config["extractions"]:
         extraction["endpoint"]["url"] = extraction["endpoint"]["url"].format(domain=fake_api_domain)
+        if extraction.get("mapping_fetch"):
+            # use 'replace' instead of 'format' because in the url there is a ref: ${extracted_item::id}
+            extraction["mapping_fetch"]["endpoint"]["url"] = extraction["mapping_fetch"]["endpoint"]["url"].replace("{domain}", fake_api_domain)
 
     # insert config_base user POST request to api
     auth_header = {"Authorization": config_api_key}

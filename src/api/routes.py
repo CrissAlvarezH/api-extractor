@@ -1,5 +1,6 @@
 import json
 import secrets
+import logging
 from typing import Optional
 
 import boto3
@@ -13,6 +14,8 @@ from src.common.repository import (
 )
 
 from .utils import Response
+
+LOG = logging.getLogger("api-routes")
 
 # API CONFIGS
 
@@ -33,6 +36,7 @@ def create_config(body: dict, api_key: str):
         return Response(config)
     except ValidationError as e:
         errors = str(e).split("\n")
+        LOG.error(f"create config: {e}")
         return Response({"error": errors}, status=400)
 
 
