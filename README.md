@@ -558,7 +558,7 @@ Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la sigui
 Podemos configurar un endpoint del cual extraer detalles de cada item y anexarlos al json orinal de ese item, esto es muy util
 cuando el endpoint que lista toda la data no tiene los detalles de cada item que necesitamos
 
-```
+``` json
 {
     "mapping_fetch": {
         "endpoint": <Endpoint>,
