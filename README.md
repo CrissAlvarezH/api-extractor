@@ -18,39 +18,39 @@ Esta aplicación serverles permite consumir un api que sigue estandares REST y g
 - Etc.
 
 ## Documentación
-
 - [API Extractor](#api-extractor)
-	- [Documentación](#documentación)
+  - [Documentación](#documentación)
 - [Infraestructura](#infraestructura)
 - [Despliegue](#despliegue)
-		- [Destrucción de recursos](#destrucción-de-recursos)
+    - [Destrucción de recursos](#destrucción-de-recursos)
 - [API](#api)
-	- [Colección de Postman](#colección-de-postman)
-	- [Api keys](#api-keys)
+  - [Colección de Postman](#colección-de-postman)
+  - [Api keys](#api-keys)
 - [Configuración para el api extractor](#configuración-para-el-api-extractor)
-	- [Estructura general](#estructura-general)
-	- [Endpoint](#endpoint)
-	- [JsonField](#jsonfield)
-	- [Autenticación por tokens](#autenticación-por-tokens)
-		- [Refresco de token automatico](#refresco-de-token-automatico)
-	- [Ejecutar una configuración](#ejecutar-una-configuración)
-		- [Logs de ejecución](#logs-de-ejecución)
+  - [Estructura general](#estructura-general)
+  - [Endpoint](#endpoint)
+  - [JsonField](#jsonfield)
+  - [Autenticación por tokens](#autenticación-por-tokens)
+    - [Refresco de token automatico](#refresco-de-token-automatico)
+  - [Ejecutar una configuración](#ejecutar-una-configuración)
+    - [Logs de ejecución](#logs-de-ejecución)
 - [Extracciones](#extracciones)
-	- [Endpoint a extraer](#endpoint-a-extraer)
-	- [Transformaciones](#transformaciones)
-		- [Actions](#actions)
-	- [Paginación](#paginación)
-		- [PaginationParameters](#paginationparameters)
-			- [ConditionExpression](#conditionexpression)
-	- [Esquema de la data](#esquema-de-la-data)
-		- [Subelementos](#subelementos)
-	- [Output params](#output-params)
-	- [Destino en S3](#destino-en-s3)
+  - [Endpoint a extraer](#endpoint-a-extraer)
+  - [Transformaciones](#transformaciones)
+    - [Actions](#actions)
+  - [Paginación](#paginación)
+    - [PaginationParameters](#paginationparameters)
+      - [ConditionExpression](#conditionexpression)
+  - [Esquema de la data](#esquema-de-la-data)
+    - [Subelementos](#subelementos)
+  - [Mapeo de items agregando data de otro endpoint](#mapeo-de-items-agregando-data-de-otro-endpoint)
+  - [Output params](#output-params)
+  - [Destino en S3](#destino-en-s3)
 - [Referencias](#referencias)
 - [Testing](#testing)
 - [Ejemplos](#ejemplos)
-	- [Zoho Deals](#zoho-deals)
-	- [Zoho Tickets](#zoho-tickets)
+  - [Zoho Deals](#zoho-deals)
+  - [Zoho Tickets](#zoho-tickets)
 
 # Infraestructura 
 <img src='https://github.com/CrissAlvarezH/api-extractor/blob/main/docs/imgs/aws-arch-diagram.png'/>
@@ -549,8 +549,27 @@ Si necesitas acceder a un elemento que esta anidado, la sintaxis seriá la sigui
 
 | type       | user_name         | user_acc_number   |
 |------------|-------------------|-------------------|
-|  A         | Cristian          | 3344   	         |
-|  B         | Juan              | 5555              | 
+|  A         | Cristian          | 3344   	     |
+|  B         | Juan              | 5555              |
+
+
+# Mapeo de items agregando data de otro endpoint
+
+Podemos configurar un endpoint del cual extraer detalles de cada item y anexarlos al json orinal de ese item, esto es muy util
+cuando el endpoint que lista toda la data no tiene los detalles de cada item que necesitamos
+
+```
+{
+    "mapping_fetch": {
+        "endpoint": <Endpoint>,
+        "prefix": "string",
+        "data_schema": "json"
+    }
+}
+```
+El mapeo consiste en que por cada item del array de datos se realizará una petición a `mapping_fetch.endpoint`, una vez hecha esa petición el json
+resultante será pasado a travez del `data_schema` y el output de eso será anexado con el `prefix` configurado al json original del item
+
 
 ## Output params
 Estos parametros definen como se va a exportar el archivo final, se establecen en la extracción y los posibles valores son los siguientes
